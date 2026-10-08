@@ -19,7 +19,7 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  FLUTTER_VERSION: 3.47.2
+  FLUTTER_VERSION: 3.47.6
   FIREBASE_PROJECT: four-questions-d1c19
   WIF_PROVIDER: projects/639658462449/locations/global/workloadIdentityPools/github/providers/github
   DEPLOY_SA: github-deployer@four-questions-d1c19.iam.gserviceaccount.com
