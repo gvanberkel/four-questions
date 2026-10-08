@@ -9,6 +9,10 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+  action_design_system:
+    path: ../action_design_system
+  bron_hovi_theme:
+    path: ../themes/bron_hovi_theme
 
 dev_dependencies:
   flutter_test:

@@ -1,0 +1,23 @@
+name: action_design_system
+description: >-
+  Pure-UI design system for four-questions. Brand-agnostic and entirely decoupled
+  from the backend: no networking, no service locator, no routing, no global
+  mutable state. See test/purity_test.dart for the enforced contract.
+version: 0.0.1
+publish_to: none
+
+environment:
+  sdk: ^3.13.0
+
+dependencies:
+  flutter:
+    sdk: flutter
+  flutter_slick: ^5.8.0
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^6.0.0
+
+flutter:
+  uses-material-design: true

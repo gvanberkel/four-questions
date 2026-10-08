@@ -40,9 +40,11 @@ Resolve-DnsName four.pragmatic-abstraction.co.za -Type CNAME -Server ns37.domain
 Resolve-DnsName four.pragmatic-abstraction.co.za -Server 8.8.8.8
 ```
 
-## Known issue at setup time (2026-10-08)
+## Setup timeline (2026-10-08)
 
-The domain was registered the same day. The `.co.za` registry (ZACR) had not yet published the delegation, so public resolvers returned `NXDOMAIN` for `pragmatic-abstraction.co.za` even though GoDaddy's nameservers already served the zone. Until the registry delegation appears, the custom domain won't resolve and Firebase can't verify it or issue SSL. Nothing needs changing — once delegation is live, open the Firebase domain entry and click **Verify** (it also re-checks automatically).
+- The domain was registered the same day. At first the `.co.za` registry (ZACR) hadn't published the delegation, so public resolvers returned `NXDOMAIN` for `pragmatic-abstraction.co.za` even though GoDaddy's nameservers already served the zone.
+- About 30 minutes later the delegation was live, and 1.1.1.1, 8.8.8.8 and 9.9.9.9 all resolved `four` → `four-questions-d1c19.web.app` → `199.36.158.100`.
+- Firebase's first **Verify** reported "Records not yet detected", most likely because it still had the earlier negative answer cached. It re-checks automatically, and once it verifies, the SSL cert is provisioned. If it's still stuck after a few hours: Firebase console → Hosting → domain row → **Needs setup** → **Verify**.
 
 ## Adding more apps later
 

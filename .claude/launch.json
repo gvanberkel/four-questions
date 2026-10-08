@@ -1,0 +1,31 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "four-questions",
+      "cwd": "app",
+      "runtimeExecutable": "flutter",
+      "runtimeArgs": [
+        "run",
+        "-d",
+        "web-server",
+        "--web-port",
+        "5310"
+      ],
+      "port": 5310
+    },
+    {
+      "name": "action-gallery",
+      "cwd": "action_design_system/example",
+      "runtimeExecutable": "flutter",
+      "runtimeArgs": [
+        "run",
+        "-d",
+        "web-server",
+        "--web-port",
+        "5312"
+      ],
+      "port": 5312
+    }
+  ]
+}

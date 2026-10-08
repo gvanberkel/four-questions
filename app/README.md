@@ -11,10 +11,10 @@ A single-page Flutter web app (will use the [`flutter_slick`](https://pub.dev/pa
 flutter pub get
 flutter run -d chrome          # local dev
 flutter build web --release    # production build -> build/web
-firebase deploy --only hosting # publish (see docs/DEPLOYMENT.md)
+firebase deploy --only hosting # publish (see ../docs/DEPLOYMENT.md)
 ```
 
 ## Docs
 
-- [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md) — Firebase project, CLI accounts, build & deploy steps
-- [docs/DOMAIN-DNS.md](docs/DOMAIN-DNS.md) — custom domain, GoDaddy DNS records, troubleshooting
+- [../docs/DEPLOYMENT.md](../docs/DEPLOYMENT.md) — Firebase project, CLI accounts, build & deploy steps
+- [../docs/DOMAIN-DNS.md](../docs/DOMAIN-DNS.md) — custom domain, GoDaddy DNS records, troubleshooting

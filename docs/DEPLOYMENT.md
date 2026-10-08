@@ -4,7 +4,7 @@
 
 | Item | Value |
 |---|---|
-| App type | Flutter web (single page), built to static files in `build/web` |
+| App type | Flutter web (single page) in `app/`, built to static files in `app/build/web` |
 | Host | Firebase Hosting |
 | Google / Firebase account | gvanberkel@gmail.com |
 | Firebase project name | `four-questions` |
@@ -18,6 +18,8 @@
 | Source repo | https://github.com/gvanberkel/four-questions |
 
 ## Config files
+
+Both live in `app/` — run all `firebase` commands from there.
 
 - `firebase.json` — Hosting config: serves `build/web`, rewrites all paths to `/index.html` (SPA), `no-cache` on `index.html` / `flutter_bootstrap.js` / `flutter_service_worker.js` / `version.json` so new releases are picked up immediately, 1-hour cache on other assets.
 - `.firebaserc` — maps the `default` alias to `four-questions-d1c19`.
@@ -46,6 +48,7 @@ Remove-Item Env:CLAUDECODE -ErrorAction SilentlyContinue; firebase login:add
 ## Build & deploy
 
 ```bash
+cd app
 flutter pub get
 flutter build web --release
 firebase deploy --only hosting --account gvanberkel@gmail.com

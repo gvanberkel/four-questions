@@ -1,0 +1,27 @@
+name: action_gallery
+description: >-
+  Component gallery for action_design_system. Every component, every state,
+  rendered under the Bron Hovi brand so the building blocks can be reviewed on
+  their own before a screen composes them. Run with
+  `flutter run -d web-server --web-port 5312` (launch.json: action-gallery).
+publish_to: none
+version: 0.1.0
+
+environment:
+  sdk: ^3.13.0
+
+dependencies:
+  flutter:
+    sdk: flutter
+  action_design_system:
+    path: ../
+  bron_hovi_theme:
+    path: ../../themes/bron_hovi_theme
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^6.0.0
+
+flutter:
+  uses-material-design: true

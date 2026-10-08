@@ -1,0 +1,22 @@
+{
+	"folders": [
+		{
+			"path": "app"
+		},
+		{
+			"path": "action_design_system"
+		},
+		{
+			"path": "themes/bron_hovi_theme"
+		}
+	],
+	"settings": {
+		"cSpell.words": [
+			"Bron",
+			"Hovi",
+			"Color",
+			"Rect",
+			"wordmark"
+		]
+	}
+}
