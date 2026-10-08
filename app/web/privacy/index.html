@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="How Four Questions uses your Google account and your answers.">
+  <title>Privacy · Four Questions</title>
+  <link rel="icon" type="image/png" href="/favicon.png">
+  <!--
+    Linked from the Google sign-in consent screen (Google Auth Platform →
+    Branding → privacy policy). Served as is by Firebase Hosting, outside the
+    Flutter app, so it loads without the engine. If what the app reads,
+    keeps or sends changes, this page must change with it.
+  -->
+  <style>
+    :root {
+      --fq-bar: #FFFFFF;
+      --fq-surface: #FAF7F4;
+      --fq-line: #E6DEE0;
+      --fq-text: #1F1A22;
+      --fq-muted: #5C5460;
+      --fq-primary: #553C6E;
+      --fq-partner: #5E9474;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --fq-bar: #110E13;
+        --fq-surface: #17131A;
+        --fq-line: #362E3A;
+        --fq-text: #EDE6EF;
+        --fq-muted: #B3A9B7;
+        --fq-primary: #CDB6E6;
+        --fq-partner: #8CC4A2;
+      }
+    }
+
+    html, body {
+      margin: 0;
+      padding: 0;
+      background: var(--fq-surface);
+      color: var(--fq-text);
+      font: 400 16px/1.6 Inter, "Segoe UI", system-ui, -apple-system, Roboto, sans-serif;
+    }
+
+    .bar {
+      display: flex;
+      align-items: center;
+      height: 56px;
+      box-sizing: border-box;
+      padding: 0 24px;
+      background: var(--fq-bar);
+      border-bottom: 1px solid var(--fq-line);
+    }
+
+    .bar a {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      color: var(--fq-primary);
+      font-weight: 700;
+      font-size: 18px;
+      text-decoration: none;
+    }
+
+    .bar svg { width: 24px; height: 24px; }
+
+    main {
+      max-width: 640px;
+      margin: 0 auto;
+      padding: 32px 24px 64px;
+    }
+
+    h1 { font-size: 28px; line-height: 1.25; margin: 0 0 4px; }
+    h2 { font-size: 18px; margin: 32px 0 8px; }
+    p, ul { margin: 0 0 12px; }
+    ul { padding-left: 22px; }
+    li { margin-bottom: 6px; }
+    a { color: var(--fq-primary); }
+    .updated { color: var(--fq-muted); font-size: 14px; margin-bottom: 24px; }
+
+    @media (max-width: 719px) {
+      .bar { padding: 0 16px; }
+      main { padding: 24px 16px 48px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="bar">
+    <a href="/">
+      <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" fill="none" stroke-width="11" aria-hidden="true">
+        <circle cx="66" cy="50" r="28" stroke="var(--fq-partner)"></circle>
+        <circle cx="34" cy="50" r="28" stroke="var(--fq-primary)"></circle>
+      </svg>
+      Four Questions
+    </a>
+  </div>
+
+  <main>
+    <h1>Privacy</h1>
+    <p class="updated">Last updated 8 October 2026</p>
+
+    <p>
+      Four Questions is a small family app: a few questions, once a day, with
+      the answers kept in one Google Sheet the family shares. It has no server
+      of its own. Everything you do in it happens in your browser, between you
+      and Google.
+    </p>
+
+    <h2>What the app asks Google for</h2>
+    <ul>
+      <li>
+        <strong>Your name and email address</strong> (the <code>openid</code>,
+        <code>email</code> and <code>profile</code> permissions), to know who is
+        answering and to show it in the app.
+      </li>
+      <li>
+        <strong>Access to Google Sheets</strong> (the
+        <code>spreadsheets</code> permission). The app uses it for one
+        spreadsheet only, the family's Four Questions sheet: it reads the
+        questions and answers there and writes your answers and the name you
+        choose. It does not open, list or change any other spreadsheet.
+        Google's permission is broader than that only because Sheets offers no
+        narrower one for a sheet the app did not create.
+      </li>
+    </ul>
+    <p>
+      You can use the app only if the sheet's owner has shared it with your
+      Google account as an editor.
+    </p>
+
+    <h2>Where your data goes</h2>
+    <ul>
+      <li>
+        <strong>Into the family sheet.</strong> Your answers, notes and chosen
+        name are saved there, next to your email address, where everyone the
+        sheet is shared with can see them.
+      </li>
+      <li>
+        <strong>On your device.</strong> The app keeps your name, email, a
+        short-lived Google access token, a copy of the questions and recent
+        answers, and any answers not yet saved, in your browser's local
+        storage, so it opens quickly and works offline. Signing out of the app
+        removes them.
+      </li>
+      <li>
+        <strong>Nowhere else.</strong> There are no analytics, no advertising,
+        no tracking and no other services. Your data is not sold, shared with
+        anyone outside the sheet, or used for anything but the app itself.
+        The site is hosted on Google Firebase Hosting, which, like any web
+        host, keeps standard request logs.
+      </li>
+    </ul>
+
+    <h2>Google user data</h2>
+    <p>
+      Four Questions' use and transfer of information received from Google
+      APIs adheres to the
+      <a href="https://developers.google.com/terms/api-services-user-data-policy">Google API Services User Data Policy</a>,
+      including the Limited Use requirements.
+    </p>
+
+    <h2>Your choices</h2>
+    <ul>
+      <li>Sign out in the app to clear what it keeps about you on your device.</li>
+      <li>
+        Remove the app's access at any time in your Google Account, under
+        <a href="https://myaccount.google.com/connections">Third-party apps &amp; services</a>.
+      </li>
+      <li>
+        To have your answers or name removed from the sheet, ask the sheet's
+        owner, or email the address below.
+      </li>
+    </ul>
+
+    <h2>Contact</h2>
+    <p>
+      Greg van Berkel ·
+      <a href="mailto:gvanberkel@gmail.com">gvanberkel@gmail.com</a>
+    </p>
+  </main>
+</body>
+</html>
