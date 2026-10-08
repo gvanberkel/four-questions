@@ -9,9 +9,9 @@ A single-page Flutter web app (will use the [`flutter_slick`](https://pub.dev/pa
 
 ```bash
 flutter pub get
-flutter run -d chrome          # local dev
-flutter build web --release    # production build -> build/web
-git push                       # CI deploys main automatically (see ../docs/DEPLOYMENT.md)
+flutter run -d chrome --wasm        # local dev
+flutter build web --release --wasm  # production build -> build/web
+git push                            # CI deploys main automatically (see ../docs/DEPLOYMENT.md)
 ```
 
 ## Docs

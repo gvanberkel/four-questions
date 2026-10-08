@@ -21,7 +21,7 @@
 
 Both live in `app/` — run all `firebase` commands from there.
 
-- `firebase.json` — Hosting config: serves `build/web`, rewrites all paths to `/index.html` (SPA), `no-cache` on `index.html` / `flutter_bootstrap.js` / `flutter_service_worker.js` / `version.json` so new releases are picked up immediately, 1-hour cache on other assets.
+- `firebase.json` — Hosting config: serves `build/web`, rewrites all paths to `/index.html` (SPA), `no-cache` on `index.html` / `flutter_bootstrap.js` / `flutter_service_worker.js` / `version.json` so new releases are picked up immediately, 1-hour cache on other assets. Every response carries `Cross-Origin-Opener-Policy: same-origin` and `Cross-Origin-Embedder-Policy: credentialless` (see [WebAssembly](#webassembly)).
 - `.firebaserc` — maps the `default` alias to `four-questions-d1c19`.
 
 ## Firebase CLI accounts
@@ -51,7 +51,7 @@ Workflow: [`.github/workflows/deploy.yml`](../.github/workflows/deploy.yml)
 
 | Trigger | What happens |
 |---|---|
-| Push to `main` | analyze + test all three packages → `flutter build web` → deploy to the **live** site |
+| Push to `main` | analyze + test all three packages → `flutter build web --wasm` → deploy to the **live** site |
 | Pull request (same repo) | analyze + test → build → deploy to preview channel `pr-<number>` (expires after 7 days) → URL commented on the PR |
 | Pull request from a fork | analyze + test + build only (forks get no deploy credentials) |
 | Manual (Actions tab → Deploy → Run workflow) | same as push to `main` |
@@ -82,9 +82,11 @@ Normally not needed (see above), but useful for hotfixes or when Actions is down
 ```bash
 cd app
 flutter pub get
-flutter build web --release
+flutter build web --release --wasm
 firebase deploy --only hosting --account gvanberkel@gmail.com
 ```
+
+Always build with `--wasm`, as CI does; a plain `flutter build web` deploys a JS-only app.
 
 Preview channel (temporary URL, does not touch live):
 
@@ -93,6 +95,15 @@ firebase hosting:channel:deploy preview --account gvanberkel@gmail.com
 ```
 
 Rollback: Firebase console → Hosting → Release history → ⋮ → Roll back.
+
+## WebAssembly
+
+The app ships as a WebAssembly build (`flutter build web --wasm`). The output contains both `main.dart.wasm` and the JavaScript build; `flutter_bootstrap.js` loads Wasm in browsers with WasmGC (Chrome / Edge 119+) and falls back to JavaScript elsewhere (Safari, Firefox, every iOS browser).
+
+- **Headers.** The Wasm renderer runs multi-threaded only when the page is cross-origin isolated, hence the COOP / COEP headers in `firebase.json`. `credentialless` (rather than `require-corp`) still lets the page load cross-origin resources without CORP headers, such as Flutter's fallback fonts from `fonts.gstatic.com`; such requests go without cookies. Without the headers the app still runs, single-threaded.
+- **Packages.** Code that imports `dart:html`, `dart:js` or `package:js` does not compile to Wasm — use `package:web` and `dart:js_interop`. A dependency that breaks this fails the CI build, with the import chain at the top of the error.
+- **Checking.** In Chrome DevTools → Network, the page loads `main.dart.wasm` (and `main.dart.mjs`) instead of `main.dart.js`. In code, `const bool.fromEnvironment('dart.tool.dart2wasm')` is true under Wasm.
+- **Local dev.** `flutter run -d chrome --wasm`.
 
 ## Notes
 

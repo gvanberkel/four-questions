@@ -48,9 +48,11 @@ jobs:
             echo "::endgroup::"
           done
 
-      - name: Build web
+      # WebAssembly build. Flutter also emits the JS build alongside it and the
+      # bootstrap picks JS in browsers without WasmGC (Safari, all of iOS).
+      - name: Build web (wasm)
         working-directory: app
-        run: flutter build web --release
+        run: flutter build web --release --wasm
 
       # Fork PRs get no OIDC token, so they stop after build & test.
       - id: auth

@@ -5,7 +5,14 @@
     "rewrites": [{ "source": "**", "destination": "/index.html" }],
     "headers": [
       {
-        "source": "**/*.@(js|wasm|json|png|otf|ttf|woff2)",
+        "source": "**",
+        "headers": [
+          { "key": "Cross-Origin-Opener-Policy", "value": "same-origin" },
+          { "key": "Cross-Origin-Embedder-Policy", "value": "credentialless" }
+        ]
+      },
+      {
+        "source": "**/*.@(js|mjs|wasm|json|png|otf|ttf|woff2)",
         "headers": [{ "key": "Cache-Control", "value": "public, max-age=3600" }]
       },
       {
