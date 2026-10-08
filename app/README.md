@@ -11,7 +11,7 @@ A single-page Flutter web app (will use the [`flutter_slick`](https://pub.dev/pa
 flutter pub get
 flutter run -d chrome          # local dev
 flutter build web --release    # production build -> build/web
-firebase deploy --only hosting # publish (see ../docs/DEPLOYMENT.md)
+git push                       # CI deploys main automatically (see ../docs/DEPLOYMENT.md)
 ```
 
 ## Docs

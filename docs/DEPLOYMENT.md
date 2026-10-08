@@ -45,7 +45,39 @@ Adding the account (one-off) — must be run from a normal terminal. If run from
 Remove-Item Env:CLAUDECODE -ErrorAction SilentlyContinue; firebase login:add
 ```
 
-## Build & deploy
+## Continuous deployment (GitHub Actions)
+
+Workflow: [`.github/workflows/deploy.yml`](../.github/workflows/deploy.yml)
+
+| Trigger | What happens |
+|---|---|
+| Push to `main` | analyze + test all three packages → `flutter build web` → deploy to the **live** site |
+| Pull request (same repo) | analyze + test → build → deploy to preview channel `pr-<number>` (expires after 7 days) → URL commented on the PR |
+| Pull request from a fork | analyze + test + build only (forks get no deploy credentials) |
+| Manual (Actions tab → Deploy → Run workflow) | same as push to `main` |
+
+Analyze or test failures stop the run before anything is deployed. Flutter is pinned to `FLUTTER_VERSION` in the workflow; bump it there when you upgrade locally.
+
+### Keyless auth (Workload Identity Federation)
+
+GitHub has **no stored Google key or secret**. Each run swaps GitHub's short-lived OIDC token for short-lived Google credentials.
+
+| GCP resource | Value |
+|---|---|
+| Project number | `639658462449` |
+| Workload identity pool | `github` (global) |
+| OIDC provider | `github` — issuer `https://token.actions.githubusercontent.com`, condition `assertion.repository == 'gvanberkel/four-questions'` |
+| Service account | `github-deployer@four-questions-d1c19.iam.gserviceaccount.com` |
+| SA project roles | `roles/firebasehosting.admin`, `roles/serviceusage.serviceUsageConsumer` |
+| Who may impersonate the SA | `principalSet://iam.googleapis.com/projects/639658462449/locations/global/workloadIdentityPools/github/attribute.repository/gvanberkel/four-questions` (`roles/iam.workloadIdentityUser`) |
+
+Only workflows in `gvanberkel/four-questions` can use it. If the repo is renamed or moved, update the provider condition and the principalSet binding.
+
+The resources were created with gcloud as gvanberkel@gmail.com. gcloud's default account on this machine is still the work account, so pass `--account=gvanberkel@gmail.com --project=four-questions-d1c19` to gcloud commands for this project.
+
+## Manual build & deploy
+
+Normally not needed (see above), but useful for hotfixes or when Actions is down:
 
 ```bash
 cd app

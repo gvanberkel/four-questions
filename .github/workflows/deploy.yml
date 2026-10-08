@@ -1,0 +1,90 @@
+# Build, test and deploy the Flutter web app to Firebase Hosting.
+#
+# - push to main  -> deploy to the live site (four.pragmatic-abstraction.co.za)
+# - pull request  -> deploy to a 7-day preview channel and comment the URL on the PR
+#
+# Auth is keyless: GitHub's OIDC token is exchanged for short-lived Google
+# credentials via Workload Identity Federation (see docs/DEPLOYMENT.md).
+
+name: Deploy
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+env:
+  FLUTTER_VERSION: 3.47.2
+  FIREBASE_PROJECT: four-questions-d1c19
+  WIF_PROVIDER: projects/639658462449/locations/global/workloadIdentityPools/github/providers/github
+  DEPLOY_SA: github-deployer@four-questions-d1c19.iam.gserviceaccount.com
+
+jobs:
+  build-test-deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write       # mint the GitHub OIDC token for Google auth
+      pull-requests: write  # comment the preview URL
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          cache: true
+
+      - name: Analyze & test packages
+        run: |
+          for pkg in themes/bron_hovi_theme action_design_system app; do
+            echo "::group::$pkg"
+            (cd "$pkg" && flutter pub get && flutter analyze && flutter test)
+            echo "::endgroup::"
+          done
+
+      - name: Build web
+        working-directory: app
+        run: flutter build web --release
+
+      # Fork PRs get no OIDC token, so they stop after build & test.
+      - id: auth
+        if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ env.WIF_PROVIDER }}
+          service_account: ${{ env.DEPLOY_SA }}
+
+      - uses: actions/setup-node@v4
+        if: steps.auth.outcome == 'success'
+        with:
+          node-version: 22
+
+      - name: Deploy live
+        if: steps.auth.outcome == 'success' && github.event_name != 'pull_request'
+        working-directory: app
+        run: npx --yes firebase-tools@15 deploy --only hosting --project "$FIREBASE_PROJECT" --non-interactive
+
+      - name: Deploy preview channel
+        id: preview
+        if: steps.auth.outcome == 'success' && github.event_name == 'pull_request'
+        working-directory: app
+        run: |
+          npx --yes firebase-tools@15 hosting:channel:deploy "pr-${{ github.event.pull_request.number }}" \
+            --expires 7d --project "$FIREBASE_PROJECT" --non-interactive --json > channel.json
+          url=$(node -e "const r=require('./channel.json').result; console.log(Object.values(r)[0].url)")
+          echo "url=$url" >> "$GITHUB_OUTPUT"
+
+      - name: Comment preview URL
+        if: steps.preview.outcome == 'success'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh pr comment ${{ github.event.pull_request.number }} --repo ${{ github.repository }} \
+            --edit-last --create-if-none \
+            --body "Preview for ${{ github.event.pull_request.head.sha }}: ${{ steps.preview.outputs.url }} (expires in 7 days)"
