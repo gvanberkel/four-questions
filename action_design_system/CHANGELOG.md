@@ -1,3 +1,19 @@
+## 0.0.2
+
+* Components for asking questions one at a time: `ActionPrompt`,
+  `ActionChoiceGroup` (a choice that starts empty), `ActionStepTrack` and
+  `ActionStepSwitcher`.
+* `ActionTextField`, a labelled single-line field.
+* `ActionHeroPanel`, the front door: hero mark, title, message, controls.
+* `ActionNoteField` keeps one controller for its lifetime, so typing in the
+  middle of a note no longer throws the cursor to the end; it also takes an
+  optional `label`.
+* `ActionListRow(wrap: true)` lets title and subtitle run to several lines.
+* `ActionPage`'s pinned footer is aligned to the page's content width instead
+  of spanning the window.
+* Icons: `saving`, `saved`, `selected`, `unanswered`, `skip`, `note`,
+  `today`, `sheet`.
+
 ## 0.0.1
 
 * Starter set, ported from `guidepost_design_system` 0.0.4 with the

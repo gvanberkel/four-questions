@@ -61,6 +61,8 @@ class _GalleryShellState extends State<GalleryShell> {
       ActionNavItem(
           id: 'lists', label: 'Lists and fields', icon: ActionIcons.person),
       ActionNavItem(
+          id: 'questions', label: 'Questions', icon: ActionIcons.help),
+      ActionNavItem(
           id: 'status', label: 'Status and identity', icon: ActionIcons.people),
     ]),
   ];
@@ -76,7 +78,7 @@ class _GalleryShellState extends State<GalleryShell> {
         name: 'Greg van Berkel',
         email: 'gregvb@tfn.co.za',
         rolesLabel: 'Component gallery',
-        versionLabel: 'action_design_system 0.0.1',
+        versionLabel: 'action_design_system 0.0.2',
         settings: [
           ActionSwitchRow(
             icon: ActionIcons.reminder,
@@ -95,6 +97,7 @@ class _GalleryShellState extends State<GalleryShell> {
         'actions' => const ActionsPage(),
         'surfaces' => const SurfacesPage(),
         'lists' => const ListsPage(),
+        'questions' => const QuestionsPage(),
         'status' => const StatusPage(),
         _ => const FoundationsPage(),
       },
@@ -629,13 +632,24 @@ class ListsPage extends StatelessWidget {
                   title: 'With a trailing value',
                   trailing: ActionBodyText('weekly', muted: true),
                 ),
+                ActionListRow(
+                  icon: ActionIcons.positive,
+                  iconTone: ActionTone.positive,
+                  title: 'Have you taken a moment for yourself today? '
+                      'A row that wraps reads in full.',
+                  subtitle: 'wrap: true lets a long note run to as many '
+                      'lines as it needs instead of ending in an ellipsis.',
+                  trailing: const ActionPill('Yes', tone: ActionTone.accent),
+                  onTap: () {},
+                  wrap: true,
+                ),
               ],
             ),
           ),
           const Example(
             title: 'Fields',
             boundary:
-                'Stateless: the text lives on the view model, which is what makes a screen reconstructible.',
+                'The text lives on the view model, which is what makes a screen reconstructible; the field keeps only the cursor.',
             child: _FieldsDemo(),
           ),
         ],
@@ -653,6 +667,7 @@ class _FieldsDemo extends StatefulWidget {
 
 class _FieldsDemoState extends State<_FieldsDemo> {
   String _query = '';
+  String _name = '';
   String _note = '';
   bool _reminders = true;
 
@@ -685,6 +700,13 @@ class _FieldsDemoState extends State<_FieldsDemo> {
             ),
           ],
         ),
+        ActionTextField(
+          label: 'Your name',
+          value: _name,
+          onChanged: (value) => setState(() => _name = value),
+          hint: 'The name you go by',
+          footnote: 'ActionTextField — one line, a label above it.',
+        ),
         ActionNoteField(
           value: _note,
           onChanged: (value) => _note = value,
@@ -692,6 +714,153 @@ class _FieldsDemoState extends State<_FieldsDemo> {
           footnote: 'Shared with your partner when you check in.',
         ),
       ],
+    );
+  }
+}
+
+class QuestionsPage extends StatelessWidget {
+  const QuestionsPage({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return ActionPage(
+      title: 'Questions',
+      subtitle: 'Asking one thing at a time, and showing where you are.',
+      width: ActionPageWidth.reading,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Example(
+            title: 'ActionHeroPanel',
+            boundary:
+                'A front door: mark, title, message, then controls. Knows nothing of who is signing in.',
+            child: ActionCard(
+              density: ActionCardDensity.roomy,
+              child: ActionHeroPanel(
+                title: 'Welcome to Four Questions',
+                message: 'A few questions, once a day.',
+                footnote: 'You need edit access to the family sheet.',
+                children: [
+                  ActionButton(
+                    label: 'Sign in with Google',
+                    icon: ActionIcons.signIn,
+                    expand: true,
+                    onPressed: () {},
+                  ),
+                ],
+              ),
+            ),
+          ),
+          const Example(
+            title: 'ActionPrompt, ActionChoiceGroup and ActionStepTrack',
+            boundary:
+                'The prompt states the question; the choice starts empty; the track only reports taps.',
+            child: _QuestionDemo(),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _QuestionDemo extends StatefulWidget {
+  const _QuestionDemo();
+
+  @override
+  State<_QuestionDemo> createState() => _QuestionDemoState();
+}
+
+class _QuestionDemoState extends State<_QuestionDemo> {
+  static const _questions = [
+    'Have you had fun today?',
+    'Have you taken a moment for yourself today?',
+    'Have you eaten 3 meals today?',
+  ];
+
+  final _answers = <int, bool>{};
+  final _notes = <int, String>{};
+  int _index = 0;
+  bool _forward = true;
+
+  void _go(int index) => setState(() {
+        _forward = index >= _index;
+        _index = index.clamp(0, _questions.length - 1);
+      });
+
+  @override
+  Widget build(BuildContext context) {
+    return ActionCard(
+      density: ActionCardDensity.roomy,
+      child: ActionStack(
+        rhythm: ActionRhythm.section,
+        children: [
+          ActionStepTrack(
+            stepLabel: 'Question',
+            steps: [
+              for (var i = 0; i < _questions.length; i++)
+                _answers.containsKey(i)
+                    ? ActionStepState.done
+                    : i < _index
+                        ? ActionStepState.skipped
+                        : ActionStepState.upcoming,
+            ],
+            current: _index,
+            onSelect: _go,
+          ),
+          ActionStepSwitcher(
+            forward: _forward,
+            child: ActionPrompt(
+              key: ValueKey(_index),
+              eyebrow: 'Question ${_index + 1} of ${_questions.length}',
+              prompt: _questions[_index],
+              pills: [
+                if (_index == 0)
+                  const ActionPill('Answered by Hovi today',
+                      icon: ActionIcons.people),
+              ],
+              child: ActionStack(
+                rhythm: ActionRhythm.section,
+                children: [
+                  ActionChoiceGroup<bool>(
+                    semanticLabel: _questions[_index],
+                    choices: const [
+                      ActionChoice(value: true, label: 'Yes'),
+                      ActionChoice(value: false, label: 'No'),
+                    ],
+                    value: _answers[_index],
+                    onChanged: (v) => setState(() => _answers[_index] = v),
+                  ),
+                  ActionNoteField(
+                    label: 'Notes',
+                    minLines: 3,
+                    value: _notes[_index] ?? '',
+                    onChanged: (v) => _notes[_index] = v,
+                    hint: 'Anything you want to add',
+                  ),
+                ],
+              ),
+            ),
+          ),
+          ActionInline(
+            justify: ActionInlineJustify.spaceBetween,
+            children: [
+              ActionButton(
+                label: 'Back',
+                icon: ActionIcons.back,
+                variant: ActionButtonVariant.text,
+                onPressed: _index == 0 ? null : () => _go(_index - 1),
+              ),
+              ActionButton(
+                label: _answers.containsKey(_index) ? 'Next' : 'Skip',
+                icon: ActionIcons.forward,
+                onPressed: _index == _questions.length - 1
+                    ? null
+                    : () => _go(_index + 1),
+              ),
+            ],
+          ),
+        ],
+      ),
     );
   }
 }

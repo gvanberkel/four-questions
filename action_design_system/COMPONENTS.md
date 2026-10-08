@@ -35,11 +35,14 @@ tables say, per component: what it **owns** (draws and decides), what it
 
 | | Owns | Takes | Never |
 |---|---|---|---|
-| `ActionPage` | Header (title, subtitle, actions, optional leading icon), centred content column of a named width (`content` / `reading` / `focus`), optional back link, optional pinned footer, scrolling. | `title`, `subtitle`, `actions`, `child`, `width`, `backLabel`/`onBack`, `footer`. | Own chrome; know the router. |
+| `ActionPage` | Header (title, subtitle, actions, optional leading icon), centred content column of a named width (`content` / `reading` / `focus`), optional back link, optional pinned footer aligned to the same column, scrolling. | `title`, `subtitle`, `actions`, `child`, `width`, `backLabel`/`onBack`, `footer`. | Own chrome; know the router. |
+| `ActionHeroPanel` | A front door: the brand's hero mark, a centred title and message, an optional notice, the controls stretched beneath, a footnote. Sign-in, a first-run welcome, a door that will not open. | `title`, `message`, `notice`, `children`, `footnote`. | Know who is signing in or what the controls do. |
+| `ActionPrompt` | One question put to the person: an eyebrow saying where they are, the question in display type (a semantic header), the pills that qualify it, and the answer controls beneath. | `prompt`, `eyebrow`, `pills`, `child`. | Decide what the pills say or what counts as answered. |
 | `ActionSectionHeader`, `ActionEyebrow` | A section title with a hint and trailing control; the small uppercase label. | `title`, `hint`, `trailing` / `text`, `accent`. | Decide what a section contains. |
 | `ActionBodyText` | Body copy at the right size and colour. | `text`, `large`, `muted`, `center`. | Format anything. |
 | `ActionStack` | Vertical rhythm as a name (`tight` / `group` / `section` / `page`). | `children`, `rhythm`, `align`, `expand`. | Take a number. |
 | `ActionInline` | Horizontal rhythm, optionally wrapping. | `children`, `rhythm`, `align`, `justify`, `wrap`. | Take a number. |
+| `ActionStepSwitcher` | The move between steps of a flow: the incoming step slides in from the direction of travel while the outgoing one fades. | `child` (keyed by step), `forward`. | Know what a step is or which comes next. |
 
 ## Actions
 
@@ -56,7 +59,7 @@ tables say, per component: what it **owns** (draws and decides), what it
 
 | | Owns | Takes | Never |
 |---|---|---|---|
-| `ActionListRow` | A row: tinted icon disc, title, subtitle, trailing control. A tappable row shows a chevron unless given its own trailing. `emphasis` washes the row in a tone, for an entry that must stand out among its siblings. | `title`, `subtitle`, `icon` + `iconTone`, `trailing`, `onTap`, `emphasis`. | Decide what its subtitle says. |
+| `ActionListRow` | A row: tinted icon disc, title, subtitle, trailing control. A tappable row shows a chevron unless given its own trailing. `emphasis` washes the row in a tone, for an entry that must stand out among its siblings. Title and subtitle end in an ellipsis unless `wrap`. | `title`, `subtitle`, `icon` + `iconTone`, `trailing`, `onTap`, `emphasis`, `wrap`. | Decide what its subtitle says. |
 | `ActionListCard` | A card whose content is a list of rows, hairlined between them — it owns the inset and the dividers so a screen writes neither. | `children`. | Care what the rows are. |
 | `ActionListDivider` | The inset hairline, for a card composing its own rows. | — | Appear at the ends of a list. |
 
@@ -65,7 +68,9 @@ tables say, per component: what it **owns** (draws and decides), what it
 | | Owns | Takes | Never |
 |---|---|---|---|
 | `ActionSearchField` | The search box above a list, with a clear button once there is something to clear. | `hint`, `value`, `onChanged`, `onClear`. | Hold the text — the view model does. |
-| `ActionNoteField` | A multi-line note — a reflection, an answer — with a footnote saying where it goes. | `value`, `onChanged`, `hint`, `footnote`, `minLines`. | Save anything. |
+| `ActionChoiceGroup` | A few large, equal-width options (Yes / No) of which at most one is chosen — and none until the person chooses. The chosen one is filled and ticked; each is a 56px target. | `choices` (`ActionChoice(value, label, icon)`), `value` (nullable), `onChanged`, `semanticLabel`. | Pre-select; hold its own selection; colour an answer as good or bad. |
+| `ActionNoteField` | A multi-line note — a reflection, an answer — under an optional label, with a footnote saying where it goes. Keeps the cursor while the person types. | `value`, `onChanged`, `label`, `hint`, `footnote`, `minLines`. | Save anything. |
+| `ActionTextField` | A single line — a name, a title — under an optional label, with a footnote. | `value`, `onChanged`, `label`, `hint`, `footnote`, `onSubmitted`, `autofocus`. | Validate or save anything. |
 | `ActionSwitchRow` | A labelled switch whose whole row is the target, not just the 26px control. | `title`, `subtitle`, `icon`, `value`, `onChanged`, `onTone`. | Know what the switch means. |
 | `ActionValueRow` | A setting and its current value, opening a chooser — "Remind me · Weekly ›". | `label`, `value`, `icon`, `onTap`. | Present the chooser. |
 
@@ -77,6 +82,7 @@ tables say, per component: what it **owns** (draws and decides), what it
 | `ActionCard` | The grouped surface with a named density; tappable with a semantic label. | `child`, `density`, `onTap`, `semanticLabel`. | Take an `EdgeInsets` from a screen. |
 | `ActionAvatar` | An initial on a neutral disc in four named sizes; `pending` for never-signed-in. | `name`, `size`, `pending`. | Fetch a photo. |
 | `ActionPill` | A small tinted label carrying a meaning — a theme, a streak, a delta, a status. | `label`, `tone`, `icon`. | Take a colour. |
+| `ActionStepTrack` | Where the person is in a short flow: one segment per step (done, skipped, upcoming), the current one raised; each segment a tap target with a spoken label. | `steps`, `current`, `onSelect`, `stepLabel`. | Move anywhere itself; decide what counts as done. |
 | `ActionMetric` | One reading: label, value, optional unit, delta and caption. `compact` is the small form used three-up. | `label`, `value`, `unit`, `caption`, `delta`, `compact`. | Decide whether a value is good. |
 | `ActionTrendLine` | Direction of travel over the last few values, deliberately unlabelled and unscaled — it answers "is this going the right way", not "what exactly was it in March". | `values`, `startLabel`, `endLabel`, `highlightLast`. | Be read as a chart. |
 | `ActionBanner` | A tinted note beside content; `outlined` marks something provisional rather than current. | `message`, `title`, `icon`, `tone`, `outlined`, `trailing`. | Decide its own tone. |

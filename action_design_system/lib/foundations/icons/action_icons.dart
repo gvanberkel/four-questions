@@ -48,6 +48,18 @@ abstract final class ActionIcons {
 
   static const IconData offline = Icons.cloud_off_outlined;
 
+  static const IconData saving = Icons.cloud_upload_outlined;
+  static const IconData saved = Icons.cloud_done_outlined;
+
+  static const IconData selected = Icons.check;
+
+  static const IconData unanswered = Icons.radio_button_unchecked;
+  static const IconData skip = Icons.redo;
+  static const IconData note = Icons.notes;
+  static const IconData today = Icons.today_outlined;
+
+  static const IconData sheet = Icons.table_chart_outlined;
+
   static const Map<String, IconData> named = {
     'home': home,
     'history': history,
@@ -81,5 +93,13 @@ abstract final class ActionIcons {
     'attention': attention,
     'info': info,
     'offline': offline,
+    'saving': saving,
+    'saved': saved,
+    'selected': selected,
+    'unanswered': unanswered,
+    'skip': skip,
+    'note': note,
+    'today': today,
+    'sheet': sheet,
   };
 }

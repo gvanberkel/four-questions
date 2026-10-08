@@ -184,7 +184,12 @@ class ActionPage extends StatelessWidget {
             narrow ? ActionSpacing.md : ActionSpacing.lg,
             ActionSpacing.xl,
           ),
-          child: footer!,
+          child: Center(
+            child: ConstrainedBox(
+              constraints: BoxConstraints(maxWidth: width.maxWidth),
+              child: footer!,
+            ),
+          ),
         ),
       ],
     );

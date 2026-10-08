@@ -3,15 +3,17 @@ import 'package:action_design_system/components/page/action_section_header.dart'
 import 'package:action_design_system/foundations/tokens/action_radii.dart';
 import 'package:action_design_system/foundations/tokens/action_spacing.dart';
 
-class ActionNoteField extends StatefulWidget {
-  const ActionNoteField({
+/// A single line the person types — a name, a title — under a small label.
+class ActionTextField extends StatefulWidget {
+  const ActionTextField({
     super.key,
     required this.value,
     required this.onChanged,
     this.label,
     this.hint,
     this.footnote,
-    this.minLines = 4,
+    this.onSubmitted,
+    this.autofocus = false,
   });
 
   final String value;
@@ -22,20 +24,20 @@ class ActionNoteField extends StatefulWidget {
 
   final String? footnote;
 
-  final int minLines;
+  final VoidCallback? onSubmitted;
+
+  final bool autofocus;
 
   @override
-  State<ActionNoteField> createState() => _ActionNoteFieldState();
+  State<ActionTextField> createState() => _ActionTextFieldState();
 }
 
-// The controller lives as long as the field, so typing mid-note keeps the
-// cursor where it is; a value changed from outside replaces the text.
-class _ActionNoteFieldState extends State<ActionNoteField> {
+class _ActionTextFieldState extends State<ActionTextField> {
   late final TextEditingController _controller =
       TextEditingController(text: widget.value);
 
   @override
-  void didUpdateWidget(ActionNoteField oldWidget) {
+  void didUpdateWidget(ActionTextField oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (widget.value != _controller.text) {
       _controller.value = TextEditingValue(
@@ -67,17 +69,17 @@ class _ActionNoteFieldState extends State<ActionNoteField> {
         TextField(
           controller: _controller,
           onChanged: widget.onChanged,
-          minLines: widget.minLines,
-          maxLines: null,
-          keyboardType: TextInputType.multiline,
-          textCapitalization: TextCapitalization.sentences,
-          style: theme.textTheme.bodyMedium,
+          onSubmitted:
+              widget.onSubmitted == null ? null : (_) => widget.onSubmitted!(),
+          autofocus: widget.autofocus,
+          textCapitalization: TextCapitalization.words,
+          textInputAction: TextInputAction.done,
+          style: theme.textTheme.bodyLarge,
           decoration: InputDecoration(
             hintText: widget.hint,
-            alignLabelWithHint: true,
             enabledBorder: OutlineInputBorder(
               borderRadius: ActionRadii.lgAll,
-              borderSide: BorderSide(color: scheme.primary),
+              borderSide: BorderSide(color: scheme.outline),
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: ActionRadii.lgAll,

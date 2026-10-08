@@ -14,6 +14,7 @@ class ActionListRow extends StatelessWidget {
     this.trailing,
     this.onTap,
     this.emphasis,
+    this.wrap = false,
   });
 
   final String title;
@@ -27,6 +28,10 @@ class ActionListRow extends StatelessWidget {
   final VoidCallback? onTap;
 
   final ActionTone? emphasis;
+
+  /// Title and subtitle wrap to as many lines as they need instead of
+  /// ending in an ellipsis — for rows whose words must be read in full.
+  final bool wrap;
 
   @override
   Widget build(BuildContext context) {
@@ -55,14 +60,14 @@ class ActionListRow extends StatelessWidget {
                   Text(
                     title,
                     style: theme.textTheme.titleMedium?.copyWith(fontSize: 15),
-                    overflow: TextOverflow.ellipsis,
+                    overflow: wrap ? null : TextOverflow.ellipsis,
                   ),
                   if (subtitle != null) ...[
                     const SizedBox(height: 2),
                     Text(
                       subtitle!,
                       style: theme.textTheme.bodySmall,
-                      overflow: TextOverflow.ellipsis,
+                      overflow: wrap ? null : TextOverflow.ellipsis,
                     ),
                   ],
                 ],
