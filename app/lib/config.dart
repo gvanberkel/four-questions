@@ -18,7 +18,8 @@ abstract final class AppConfig {
   /// `--dart-define=GOOGLE_CLIENT_ID=…` for a different project.
   static const googleClientId = String.fromEnvironment(
     'GOOGLE_CLIENT_ID',
-    defaultValue: '',
+    defaultValue:
+        '639658462449-4tjo0ubih3m5aedpilqo7183uupre4r0.apps.googleusercontent.com',
   );
 
   /// `--dart-define=DEMO=true` runs against an in-memory sheet with a demo
