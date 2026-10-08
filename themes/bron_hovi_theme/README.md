@@ -31,6 +31,22 @@ to it — in plum and sage. The overlap is the point: shared accountability.
 There is no raster lockup yet; when there is one, add it under
 `assets/logo/` and register the folder in `pubspec.yaml`.
 
+### App icons
+
+The web icons (`favicon.png`, `icons/Icon-*.png`, `icons/Icon-maskable-*.png`)
+are the mark rendered on the paper surface. They are PNGs, so they cannot
+read the Dart above — when the mark or its colours change, regenerate them
+(needs Pillow), from the repo root:
+
+```bash
+python themes/bron_hovi_theme/tool/make_icons.py app/web action_design_system/example/web
+```
+
+The maskable icons keep the mark inside the central 80% safe zone so
+Android's crop never clips a ring. The manifests' `background_color`
+(paper, `#FAF7F4`) and `theme_color` (plum, `#553C6E`) repeat the brand by
+hand too; keep them in step.
+
 ## Fonts
 
 `assets/fonts/` carries Inter (variable cut, SIL OFL 1.1) with its licence
