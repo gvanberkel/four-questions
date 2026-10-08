@@ -50,14 +50,20 @@ one. All steps as **gvanberkel@gmail.com**.
 
 2. **Configure the consent screen**: console → Google Auth Platform.
    - *Branding*: app name **Four Questions**, your support email, home page
-     `https://four.pragmatic-abstraction.co.za`, authorised domain
-     `pragmatic-abstraction.co.za`.
-   - *Audience*: **External**. While it is in **Testing**, only the accounts
-     listed under *Test users* can sign in, so add each family member's Google
-     account there. The alternative is to publish it to production; with the
-     sensitive Sheets scope and no Google verification, people then see a
-     "Google hasn't verified this app" warning and click through it once.
-   - *Data access*: add the scope `.../auth/spreadsheets`.
+     `https://four.pragmatic-abstraction.co.za`, privacy policy
+     `https://four.pragmatic-abstraction.co.za/privacy/` (served from
+     [`app/web/privacy/index.html`](../app/web/privacy/index.html); keep it
+     true to what the app reads, keeps and sends), authorised domain
+     `pragmatic-abstraction.co.za`. Publishing needs the privacy link.
+   - *Audience*: **External**, **In production** (published 8 October 2026),
+     so any Google account can sign in; the sheet's sharing decides who gets
+     past sign-in. The app is not verified by Google, so with the sensitive
+     Sheets scope each person sees "Google hasn't verified this app" once and
+     goes through **Advanced → Go to Four Questions (unsafe)**, and the app
+     is capped at 100 users over its lifetime. *Back to testing* would limit
+     sign-in to the accounts under *Test users* again.
+   - *Data access*: `openid`, `.../auth/userinfo.email`,
+     `.../auth/userinfo.profile` and `.../auth/spreadsheets`.
 
 3. **Create the OAuth client**: Google Auth Platform → Clients → Create
    client → **Web application**, name `Four Questions web`.
@@ -104,7 +110,8 @@ and "Hovi" has already answered the first one today. `.claude/launch.json` →
 | What you see | Why |
 |---|---|
 | Google: `Error 400: redirect_uri_mismatch` | The site's address, with a trailing `/`, is not in the client's *Authorised redirect URIs*. |
-| Google: `Error 403: access_denied` (app in Testing) | The account is not a *Test user* on the consent screen. |
+| Google: "Google hasn't verified this app" | Expected: the app is unverified. **Advanced → Go to Four Questions (unsafe)**. |
+| Google: `Error 403: access_denied` | The app was put back in Testing and the account is not a *Test user*. |
 | App: "You need edit access" — *Google said: Google Sheets API has not been used in project …* | Step 1: the Sheets API is not enabled. |
 | App: "You need edit access" — *The caller does not have permission* | The sheet is not shared with that account as an editor. |
 | App: "Sign-in is not set up yet" | `googleClientId` is empty (step 4). |
