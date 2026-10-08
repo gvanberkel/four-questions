@@ -21,7 +21,7 @@
 
 Both live in `app/` — run all `firebase` commands from there.
 
-- `firebase.json` — Hosting config: serves `build/web`, rewrites all paths to `/index.html` (SPA), `no-cache` on `index.html` / `flutter_bootstrap.js` / `flutter_service_worker.js` / `version.json` so new releases are picked up immediately, 1-hour cache on other assets. Every response carries `Cross-Origin-Opener-Policy: same-origin` and `Cross-Origin-Embedder-Policy: credentialless` (see [WebAssembly](#webassembly)).
+- `firebase.json` — Hosting config: serves `build/web`, rewrites all paths to `/index.html` (SPA), `no-cache` on `index.html` / `flutter_bootstrap.js` / `flutter_service_worker.js` / `version.json` and on every extensionless path (`/` and the app's routes, which are served `index.html` by the rewrite — header rules match the requested path, not the rewritten one) so new releases are picked up immediately, 1-hour cache on other assets. Every response carries `Cross-Origin-Opener-Policy: same-origin` and `Cross-Origin-Embedder-Policy: credentialless` (see [WebAssembly](#webassembly)).
 - `.firebaserc` — maps the `default` alias to `four-questions-d1c19`.
 
 ## Firebase CLI accounts
