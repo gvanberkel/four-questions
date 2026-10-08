@@ -18,6 +18,13 @@
 
   <meta charset="UTF-8">
   <meta content="IE=Edge" http-equiv="X-UA-Compatible">
+  <!--
+    Flutter's own viewport tag, verbatim, so the splash below is laid out at
+    the phone's width rather than a 980px desktop page shrunk to fit. The
+    engine replaces it with an identical one at start-up (flt-viewport marks
+    it as the engine's, so no warning), and nothing moves at the handover.
+  -->
+  <meta name="viewport" flt-viewport content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
   <meta name="description" content="Four Questions">
 
   <!-- iOS meta tags & icons -->
@@ -31,8 +38,322 @@
 
   <title>Four Questions</title>
   <link rel="manifest" href="manifest.json">
+
+  <!--
+    The splash.
+
+    Plain CSS, inline SVG and one inline script on purpose: it paints from
+    this file alone, before a byte of the Flutter engine has arrived. Nothing
+    here may fetch — no font, no image, no stylesheet — or the splash stops
+    being instant and becomes one more thing to wait for.
+
+    It draws the question screen, the one most visits land on, in grey: the
+    bar with the Bron Hovi mark and the account control, the step track, the
+    question, Yes / No, the notes box and the Back / Skip footer, at the
+    app's own measurements (ActionScaffold, ActionPage at focus width,
+    ActionPrompt). Only the frame is brand-coloured: surfaces, hairlines and
+    the wordmark. Everything standing in for content is neutral, so the
+    splash never pretends to show answers it does not have.
+
+    The colours are the brand's own (themes/bron_hovi_theme), copied because
+    there is no way to import them here. If the brand's surfaces move, these
+    must move with them — the seam shows at once, as a flash of the wrong
+    shade at the handover.
+  -->
+  <style>
+    :root {
+      --fq-bar: #FFFFFF;          /* surfaceContainerLowest */
+      --fq-surface: #FAF7F4;      /* surface */
+      --fq-line: #E6DEE0;         /* outlineVariant */
+      --fq-block: #EAE4E1;        /* a placeholder, deliberately neutral */
+      --fq-block-soft: #F2EDEA;
+      --fq-primary: #553C6E;      /* primary — plum */
+      --fq-self: #553C6E;         /* the mark's rings */
+      --fq-partner: #5E9474;
+    }
+
+    /* Dark follows the OS, exactly as the app does (ThemeMode.system)… */
+    @media (prefers-color-scheme: dark) {
+      :root:not([data-fq-appearance="light"]) {
+        --fq-bar: #110E13;
+        --fq-surface: #17131A;
+        --fq-line: #362E3A;
+        --fq-block: #2D2631;
+        --fq-block-soft: #251F29;
+        --fq-primary: #CDB6E6;
+        --fq-self: #CDB6E6;
+        --fq-partner: #8CC4A2;
+      }
+    }
+
+    /* …unless this browser was told otherwise in the account menu. */
+    :root[data-fq-appearance="dark"] {
+      --fq-bar: #110E13;
+      --fq-surface: #17131A;
+      --fq-line: #362E3A;
+      --fq-block: #2D2631;
+      --fq-block-soft: #251F29;
+      --fq-primary: #CDB6E6;
+      --fq-self: #CDB6E6;
+      --fq-partner: #8CC4A2;
+    }
+
+    html, body {
+      margin: 0;
+      padding: 0;
+      background: var(--fq-surface);
+    }
+
+    /*
+      Fixed and above everything, so the Flutter view mounts underneath it and
+      paints its first frames unseen.
+    */
+    #fq-splash {
+      position: fixed;
+      inset: 0;
+      z-index: 2147483000;
+      display: flex;
+      flex-direction: column;
+      background: var(--fq-surface);
+      opacity: 1;
+      transition: opacity 220ms ease-out;
+    }
+
+    /* Set by the app the moment it has something real to show. */
+    #fq-splash.is-done {
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    /* The 56px bar (ActionScaffold). */
+    .fq-splash__bar {
+      display: flex;
+      align-items: center;
+      flex: 0 0 auto;
+      height: 56px;
+      box-sizing: border-box;
+      padding: 0 24px;
+      background: var(--fq-bar);
+      border-bottom: 1px solid var(--fq-line);
+    }
+
+    /* The wordmark: the inset the tappable wordmark carries, the 24px mark,
+       then the name at three quarters of it. */
+    .fq-splash__wordmark {
+      display: flex;
+      align-items: center;
+      padding: 4px;
+    }
+
+    .fq-splash__logo {
+      width: 24px;
+      height: 24px;
+      flex: 0 0 auto;
+    }
+
+    .fq-splash__name {
+      margin-left: 10px;
+      color: var(--fq-primary);
+      font: 700 18px/1 Inter, "Segoe UI", system-ui, -apple-system, Roboto, sans-serif;
+      letter-spacing: 0.2px;
+      white-space: nowrap;
+    }
+
+    .fq-splash__grow { flex: 1 1 auto; }
+
+    .fq-splash__account {
+      display: flex;
+      align-items: center;
+      padding: 4px 30px 4px 4px;
+    }
+
+    /* The page (ActionPage, focus width), with the footer pinned beneath. */
+    .fq-splash__page {
+      flex: 1 1 auto;
+      min-height: 0;
+      box-sizing: border-box;
+      padding: 32px 24px;
+      overflow: hidden;
+    }
+
+    .fq-splash__column {
+      max-width: 440px;
+      margin: 0 auto;
+    }
+
+    .fq-splash__track {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      height: 24px;
+    }
+
+    .fq-splash__step {
+      flex: 1 1 0;
+      height: 4px;
+      border-radius: 999px;
+      background: var(--fq-block);
+    }
+
+    .fq-splash__step--current { height: 8px; }
+
+    .fq-splash__choices {
+      display: flex;
+      gap: 12px;
+    }
+
+    .fq-splash__choice {
+      flex: 1 1 0;
+      height: 56px;
+      box-sizing: border-box;
+      border: 1px solid var(--fq-line);
+      border-radius: 999px;
+      background: var(--fq-bar);
+    }
+
+    .fq-splash__notes {
+      height: 104px;
+      box-sizing: border-box;
+      border: 1px solid var(--fq-line);
+      border-radius: 12px;
+    }
+
+    .fq-splash__footer {
+      flex: 0 0 auto;
+      padding: 16px 24px 32px;
+    }
+
+    .fq-splash__footer .fq-splash__column {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    /*
+      A placeholder. They all breathe on the same 1.6s beat — they are created
+      together, so their animations are in step — which reads as "loading"
+      rather than "broken", without a spinner claiming progress this page has
+      no way to measure.
+    */
+    .fq-b {
+      background: var(--fq-block);
+      border-radius: 4px;
+      animation: fq-splash-pulse 1.6s ease-in-out infinite;
+    }
+
+    .fq-b--soft { background: var(--fq-block-soft); }
+
+    @keyframes fq-splash-pulse {
+      0%, 100% { opacity: 1; }
+      50%      { opacity: 0.5; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .fq-b { animation: none; opacity: 0.85; }
+      #fq-splash { transition: none; }
+    }
+
+    /* The same fold the app makes (ActionBreakpoints.narrow): below 720 the
+       bar, the page and the wordmark tighten and the question gets smaller. */
+    @media (max-width: 719px) {
+      .fq-splash__bar { padding: 0 16px; }
+      .fq-splash__logo { width: 22px; height: 22px; }
+      .fq-splash__name { font-size: 16.5px; }
+      .fq-splash__page { padding: 24px 16px; }
+      .fq-splash__footer { padding: 16px 16px 32px; }
+      .fq-splash__headline { height: 22px !important; }
+    }
+  </style>
+
+  <script>
+    // The appearance choice lives in this browser's local storage, where the
+    // app keeps it (LocalStore.themeMode, through shared_preferences: the key
+    // gains a "flutter." prefix and the value is JSON). Read it here, before
+    // the first paint, so someone who chose dark is not shown a light page
+    // while the engine downloads.
+    //
+    // Wrapped, because localStorage throws rather than returning null when
+    // the browser blocks site data — and a browser that refuses to remember a
+    // theme must still get a splash.
+    (function () {
+      try {
+        var choice = JSON.parse(
+          window.localStorage.getItem('flutter.fq.themeMode') || 'null');
+        if (choice === 'light' || choice === 'dark') {
+          document.documentElement.setAttribute('data-fq-appearance', choice);
+        }
+      } catch (e) {
+        // Fall through to the OS preference.
+      }
+    })();
+  </script>
 </head>
 <body>
+  <!--
+    Stands in until the app has a screen to put here; taken down by
+    lib/splash/splash_web.dart at the first frame worth looking at (see
+    lib/splash/splash_handoff.dart). Hidden from assistive technology: there
+    is nothing here to read.
+  -->
+  <div id="fq-splash" aria-hidden="true">
+    <div class="fq-splash__bar">
+      <div class="fq-splash__wordmark">
+        <!-- The Bron Hovi mark: the same two rings the app paints
+             (BronHoviMark), partner first, self over it. -->
+        <svg class="fq-splash__logo" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" fill="none" stroke-width="11">
+          <circle cx="66" cy="50" r="28" stroke="var(--fq-partner)"></circle>
+          <circle cx="34" cy="50" r="28" stroke="var(--fq-self)"></circle>
+        </svg>
+        <span class="fq-splash__name">Bron Hovi</span>
+      </div>
+      <div class="fq-splash__grow"></div>
+      <!-- Where the account control sits. -->
+      <div class="fq-splash__account">
+        <div class="fq-b" style="width: 32px; height: 32px; border-radius: 999px;"></div>
+        <div class="fq-b" style="width: 40px; height: 10px; margin-left: 8px;"></div>
+      </div>
+    </div>
+
+    <div class="fq-splash__page">
+      <div class="fq-splash__column">
+        <div class="fq-splash__track">
+          <div class="fq-splash__step fq-splash__step--current fq-b"></div>
+          <div class="fq-splash__step fq-b"></div>
+          <div class="fq-splash__step fq-b"></div>
+          <div class="fq-splash__step fq-b"></div>
+        </div>
+
+        <div style="height: 24px;"></div>
+
+        <div class="fq-b fq-b--soft" style="width: 96px; height: 9px;"></div>
+        <div style="height: 12px;"></div>
+        <div class="fq-b fq-splash__headline" style="width: 92%; height: 26px; border-radius: 6px;"></div>
+        <div style="height: 10px;"></div>
+        <div class="fq-b fq-splash__headline" style="width: 48%; height: 26px; border-radius: 6px;"></div>
+
+        <div style="height: 32px;"></div>
+
+        <div class="fq-splash__choices">
+          <div class="fq-splash__choice"></div>
+          <div class="fq-splash__choice"></div>
+        </div>
+
+        <div style="height: 24px;"></div>
+
+        <div class="fq-b fq-b--soft" style="width: 48px; height: 9px;"></div>
+        <div style="height: 10px;"></div>
+        <div class="fq-splash__notes"></div>
+      </div>
+    </div>
+
+    <div class="fq-splash__footer">
+      <div class="fq-splash__column">
+        <div class="fq-b fq-b--soft" style="width: 64px; height: 12px; margin-left: 12px;"></div>
+        <div class="fq-b" style="width: 96px; height: 40px; border-radius: 999px;"></div>
+      </div>
+    </div>
+  </div>
+
   <!--
     You can customize the "flutter_bootstrap.js" script.
     This is useful to provide a custom configuration to the Flutter loader

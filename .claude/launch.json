@@ -15,6 +15,20 @@
       "port": 5310
     },
     {
+      "name": "four-questions-demo",
+      "cwd": "app",
+      "runtimeExecutable": "flutter",
+      "runtimeArgs": [
+        "run",
+        "-d",
+        "web-server",
+        "--web-port",
+        "5311",
+        "--dart-define=DEMO=true"
+      ],
+      "port": 5311
+    },
+    {
       "name": "action-gallery",
       "cwd": "action_design_system/example",
       "runtimeExecutable": "flutter",
