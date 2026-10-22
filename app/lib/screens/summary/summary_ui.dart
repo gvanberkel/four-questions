@@ -3,11 +3,13 @@ import 'package:flutter/widgets.dart';
 import 'package:four_questions/app_controller.dart';
 import 'package:four_questions/check_in/check_in_store.dart';
 import 'package:four_questions/model/question.dart';
+import 'package:four_questions/screens/answer_view.dart';
 import 'package:four_questions/screens/shell/signed_in_shell.dart';
 import 'package:four_questions/screens/wording.dart';
 
-/// Today at a glance: each question and how it was answered, and who else
-/// has answered today. Tapping a question goes back to it.
+/// Today at a glance: each question and how you answered it — beside
+/// everyone else's answers once anyone else has answered — and who else has
+/// answered today. Tapping a question goes back to it.
 class SummaryUi extends StatelessWidget {
   const SummaryUi({super.key, required this.controller});
 
@@ -71,18 +73,33 @@ class SummaryUi extends StatelessWidget {
                         onPressed: () => controller.goToQuestion(firstOpen),
                       ),
                     ),
-                  ActionStack(
-                    rhythm: ActionRhythm.tight,
-                    children: [
-                      const ActionSectionHeader(title: 'Your answers'),
-                      ActionListCard(
-                        children: [
-                          for (final question in questions)
-                            _answerRow(store, question),
-                        ],
-                      ),
-                    ],
-                  ),
+                  if (others.isEmpty)
+                    ActionStack(
+                      rhythm: ActionRhythm.tight,
+                      children: [
+                        const ActionSectionHeader(title: 'Your answers'),
+                        ActionListCard(
+                          children: [
+                            for (final question in questions)
+                              _answerRow(store, question),
+                          ],
+                        ),
+                      ],
+                    )
+                  else
+                    ActionStack(
+                      rhythm: ActionRhythm.tight,
+                      children: [
+                        const ActionSectionHeader(title: "Everyone's answers"),
+                        ActionStack(
+                          rhythm: ActionRhythm.group,
+                          children: [
+                            for (final question in questions)
+                              _answerSet(store, question, others),
+                          ],
+                        ),
+                      ],
+                    ),
                   ActionStack(
                     rhythm: ActionRhythm.tight,
                     children: [
@@ -110,6 +127,35 @@ class SummaryUi extends StatelessWidget {
                 ],
               ),
       ),
+    );
+  }
+
+  /// Your answer and everyone else's. With one other person the two sit
+  /// side by side, in the same order on every question; with more, yours
+  /// comes first and then the latest of theirs.
+  Widget _answerSet(
+    CheckInStore store,
+    Question question,
+    List<({String email, String name, int answered})> others,
+  ) {
+    final pair = others.length == 1;
+
+    return ActionAnswerSet(
+      title: question.text,
+      layout: pair ? ActionAnswerLayout.sideBySide : ActionAnswerLayout.stacked,
+      onTap: () => controller.edit(question),
+      answers: [
+        answerView(question, store.myName, store.mine(question.id)),
+        if (pair)
+          answerView(
+            question,
+            others.single.name,
+            store.answerOf(question.id, others.single.email),
+          )
+        else
+          for (final other in store.othersAnswers(question))
+            answerView(question, other.name, other.answer),
+      ],
     );
   }
 

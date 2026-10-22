@@ -196,7 +196,38 @@ void main() {
 
     expect(s.othersWhoAnswered(q('1')), ['Hovi']);
     expect(s.othersWhoAnswered(q('2')), isEmpty);
-    expect(s.othersToday.single, (name: 'Hovi', answered: 1));
+    expect(
+      s.othersToday.single,
+      (email: 'hovi@example.com', name: 'Hovi', answered: 1),
+    );
+  });
+
+  test("others' answers: the latest five, not mine, not unanswered", () async {
+    for (final name in ['a', 'b', 'c', 'd', 'e', 'f']) {
+      sheet.answers.add(Answer(
+        day: today,
+        questionId: '1',
+        email: '$name@example.com',
+        yes: false,
+        note: 'from $name',
+      ));
+    }
+    sheet.answers
+      ..add(const Answer(day: today, questionId: '1', email: 'g@example.com'))
+      ..add(const Answer(
+        day: today,
+        questionId: '1',
+        email: 'greg@example.com',
+        yes: true,
+      ));
+    final s = store();
+    await s.start();
+
+    final theirs = s.othersAnswers(q('1'));
+    expect([for (final t in theirs) t.name], ['f', 'e', 'd', 'c', 'b']);
+    expect(theirs.first.answer.note, 'from f');
+    expect(s.othersAnswers(q('2')), isEmpty);
+    expect(s.answerOf('1', 'HOVI@example.com')?.yes, isTrue);
   });
 
   test('a first sign-in needs a name; choosing one saves it', () async {
