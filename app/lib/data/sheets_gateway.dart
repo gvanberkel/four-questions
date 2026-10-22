@@ -8,6 +8,7 @@ class SheetSnapshot {
     required this.questions,
     required this.answers,
     required this.people,
+    this.earlier = const [],
   });
 
   /// Every question, in sheet order, active or not.
@@ -18,6 +19,11 @@ class SheetSnapshot {
 
   /// Email (lower case) to the name the person goes by.
   final Map<String, String> people;
+
+  /// Everyone's answers on the days before the day asked for, in sheet
+  /// order. The Answers sheet is read whole for the day's answers, so these
+  /// cost nothing more.
+  final List<Answer> earlier;
 }
 
 /// The spreadsheet, as the app uses it.

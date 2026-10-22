@@ -64,6 +64,22 @@ void main() {
       expect(hovi.answer.yes, isFalse);
     });
 
+    test('with no day asked for, every day', () {
+      final answers = parseAnswers(
+        SheetTable([
+          header,
+          [serial, 1, 'greg@example.com', 'Yes', ''],
+          ['2026-10-07', 1, 'greg@example.com', 'No', ''],
+          ['not a date', 1, 'greg@example.com', 'No', ''],
+        ]),
+      );
+
+      expect(
+        [for (final a in answers.values) a.answer.day],
+        [today, const LocalDay(2026, 10, 7)],
+      );
+    });
+
     test('a later row for the same person and question wins', () {
       final answers = parseAnswers(
         SheetTable([

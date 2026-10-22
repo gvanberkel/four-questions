@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/foundation.dart';
 import 'package:four_questions/auth/account.dart';
+import 'package:four_questions/check_in/answer_history.dart';
 import 'package:four_questions/data/local_store.dart';
 import 'package:four_questions/data/sheets_gateway.dart';
 import 'package:four_questions/model/answer.dart';
@@ -27,7 +28,8 @@ enum SyncStatus {
 /// Today's questions and answers, local first: everything is drawn from the
 /// device at once and refreshed from the sheet when it answers; answers are
 /// kept on the device the moment they are given and sent to the sheet in the
-/// background.
+/// background. Earlier days' answers come with each refresh and are kept for
+/// the session only.
 class CheckInStore extends ChangeNotifier {
   CheckInStore({
     required this.local,
@@ -54,12 +56,15 @@ class CheckInStore extends ChangeNotifier {
   LocalDay _day;
   List<Question>? _questions;
   Map<String, Answer> _answers = {};
+  Map<String, Answer> _earlier = {};
+  AnswerHistory? _history;
   Map<String, String> _people = {};
   final Map<String, Answer> _pending = {};
   String? _pendingName;
   String? _chosenName;
 
   bool _fromSheet = false;
+  bool _earlierFromSheet = false;
   bool _refreshing = false;
   Object? _refreshError;
   SyncStatus _sync = SyncStatus.idle;
@@ -91,6 +96,15 @@ class CheckInStore extends ChangeNotifier {
   Object? get refreshError => _refreshError;
 
   SyncStatus get sync => _sync;
+
+  /// Whether earlier days' answers have been read from the sheet this
+  /// session; until they have, [history] holds only what this device has
+  /// yet to send.
+  bool get hasHistory => _earlierFromSheet;
+
+  /// Everyone's answers on the days before today.
+  AnswerHistory get history => _history ??=
+      AnswerHistory(questions: [...?_questions], answers: _earlier.values);
 
   /// The active questions, in sheet order.
   List<Question> get questions =>
@@ -186,7 +200,12 @@ class CheckInStore extends ChangeNotifier {
 
   void _overlay(Iterable<Answer> answers) {
     for (final a in answers) {
-      if (a.day == _day) _answers[a.key] = a;
+      if (a.day == _day) {
+        _answers[a.key] = a;
+      } else if (a.day.compareTo(_day) < 0) {
+        _earlier[a.key] = a;
+        _history = null;
+      }
     }
   }
 
@@ -204,6 +223,8 @@ class CheckInStore extends ChangeNotifier {
       _questions = snapshot.questions;
       _people = Map.of(snapshot.people);
       _answers = {for (final a in snapshot.answers) a.key: a};
+      _earlier = {for (final a in snapshot.earlier) a.key: a};
+      _history = null;
       if (_savesCompleted != savesBefore) {
         _overlay(_recentlySaved.values);
       } else {
@@ -211,6 +232,7 @@ class CheckInStore extends ChangeNotifier {
       }
       _overlay(_pending.values);
       _fromSheet = true;
+      _earlierFromSheet = true;
       _refreshError = null;
 
       local
@@ -236,7 +258,9 @@ class CheckInStore extends ChangeNotifier {
   void checkDay() {
     final today = _today();
     if (today == _day) return;
+    if (_day.compareTo(today) < 0) _earlier.addAll(_answers);
     _day = today;
+    _history = null;
     _recentlySaved.clear();
     _answers = {for (final a in local.answersFor(_day)) a.key: a};
     _overlay(_pending.values);

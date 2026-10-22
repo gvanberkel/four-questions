@@ -262,6 +262,31 @@ void main() {
     expect(sheet.saved.single.single.note, 'abc');
   });
 
+  test('earlier days come with the refresh, with unsent answers over them',
+      () async {
+    const yesterday = LocalDay(2026, 10, 7);
+    sheet.answers.addAll(const [
+      Answer(day: yesterday, questionId: '1', email: 'greg@example.com', yes: true),
+      Answer(day: yesterday, questionId: '2', email: 'hovi@example.com', yes: false),
+      Answer(day: LocalDay(2026, 10, 1), questionId: '3', email: 'hovi@example.com', yes: true),
+    ]);
+    local.pending = const [
+      Answer(day: yesterday, questionId: '1', email: 'greg@example.com', yes: false),
+    ];
+    sheet.reachable = false;
+    final s = store();
+    await s.start();
+    expect(s.hasHistory, isFalse);
+
+    sheet.reachable = true;
+    await s.refresh();
+
+    expect(s.hasHistory, isTrue);
+    expect(s.history.days, [yesterday, const LocalDay(2026, 10, 1)]);
+    final mine = s.history.on(yesterday).first.answers.single;
+    expect(mine.yes, isFalse, reason: 'the unsent answer wins');
+  });
+
   test('a new day starts empty', () async {
     var day = today;
     final s = CheckInStore(
@@ -281,5 +306,6 @@ void main() {
 
     expect(s.day, day);
     expect(s.answeredCount, 0);
+    expect(s.history.days, [today], reason: 'yesterday is now history');
   });
 }

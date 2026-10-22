@@ -119,6 +119,37 @@ void main() {
     expect(c.canShowSummary, isTrue);
   });
 
+  test('earlier days: the most recent first, back a day, on to today',
+      () async {
+    signedIn();
+    answered(['1', '2', '3', '4']);
+    sheet.answers.addAll(const [
+      Answer(day: LocalDay(2026, 10, 7), questionId: '1', email: 'hovi@example.com', yes: true),
+      Answer(day: LocalDay(2026, 10, 5), questionId: '2', email: 'greg@example.com', yes: false),
+    ]);
+    final c = controller()..start();
+    await pumpEventQueue();
+
+    c.showHistory();
+    expect(c.stage, AppStage.history);
+    expect(c.historyDay, const LocalDay(2026, 10, 7));
+
+    c.earlierDay();
+    expect(c.historyDay, const LocalDay(2026, 10, 5));
+    c.earlierDay();
+    expect(c.historyDay, const LocalDay(2026, 10, 5), reason: 'the oldest');
+
+    c.laterDay();
+    expect(c.historyDay, const LocalDay(2026, 10, 7));
+    c.laterDay();
+    expect(c.stage, AppStage.summary);
+
+    c.showHistory();
+    expect(c.historyDay, const LocalDay(2026, 10, 7), reason: 'opens fresh');
+    c.edit(c.store!.questions[2]);
+    expect(c.stage, AppStage.question);
+  });
+
   test('a first sign-in asks for a name, prefilled from Google', () async {
     sheet.people.remove('greg@example.com');
     signedIn();

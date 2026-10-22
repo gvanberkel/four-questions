@@ -39,6 +39,12 @@ Sign-in needs a one-off Google Cloud setup and the OAuth client ID in
    there are more. Opening the app
    when everything is answered goes straight here; otherwise it opens on the
    first unanswered question.
+5. **Earlier days**, from a quiet button on the summary: one past day at a
+   time, most recent first ("Yesterday"), with everyone's answers to each
+   question asked that day — side by side when two people answered, one
+   under another otherwise. Earlier and Later step between the days anyone
+   answered; Later from the most recent comes back to today. Nothing there
+   can be changed.
 
 ## The sheet
 
@@ -71,7 +77,10 @@ pins which screens hand over. Its colours are copied from the brand: change
 
 Everything the screens need — questions, today's answers, names — is kept on
 the device (localStorage). Each launch draws from it immediately, then
-refreshes from the sheet and redraws if anything changed. An answer is kept
+refreshes from the sheet and redraws if anything changed. Earlier days'
+answers are the exception: they come with that same read of the Answers
+sheet (it is read whole for today's), are kept in memory only, and so need
+the sheet once per session before *Earlier days* can show them. An answer is kept
 on the device the moment it is given and the app moves on; it is sent to the
 sheet in the background (notes after a short pause in typing), retried with
 backoff while the sheet can't be reached, and survives closing the tab. The
@@ -83,7 +92,8 @@ while it is waiting to retry.
 | | |
 |---|---|
 | `lib/app_controller.dart` | Which screen, and everything that moves it: sign-in, token renewal, access check, the walk through the questions. |
-| `lib/check_in/check_in_store.dart` | Today's questions and answers: local first, background sync. |
+| `lib/check_in/check_in_store.dart` | Today's questions and answers: local first, background sync. Also holds earlier days' answers for the session. |
+| `lib/check_in/answer_history.dart` | Earlier days, as the history screen reads them: which days, and who said what on each. |
 | `lib/data/` | The sheet (`google_sheets_gateway.dart`, its pure parsing in `sheet_table.dart`, and the demo sheet) and the device store. |
 | `lib/auth/` | Google sign-in by redirect, behind a small `Browser` seam so it is testable. |
 | `lib/screens/` | Wiring only: every pixel comes from `action_design_system`. `test/component_discipline_test.dart` enforces it. |

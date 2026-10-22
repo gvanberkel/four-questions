@@ -33,6 +33,9 @@ enum AppStage {
 
   question,
   summary,
+
+  /// Earlier days' answers, one day at a time, to look at but not change.
+  history,
 }
 
 /// Which screen the app is on and everything that moves it: signing in,
@@ -77,6 +80,8 @@ class AppController extends ChangeNotifier {
   bool _forward = true;
   bool _seenSummary = false;
   LocalDay? _placedFor;
+  bool _showingHistory = false;
+  LocalDay? _historyDay;
 
   final _subscriptions = <StreamSubscription<void>>[];
 
@@ -97,6 +102,15 @@ class AppController extends ChangeNotifier {
   /// Whether the question screen offers a way back to the summary.
   bool get canShowSummary => _seenSummary || (_store?.allAnswered ?? false);
 
+  /// The earlier day being looked at: the one chosen, or else the most
+  /// recent. Null when no earlier day has answers (or none are read yet).
+  LocalDay? get historyDay {
+    final days = _store?.history.days ?? const [];
+    final chosen = _historyDay;
+    if (chosen != null && days.contains(chosen)) return chosen;
+    return days.isEmpty ? null : days.first;
+  }
+
   Question? get currentQuestion {
     final questions = _store?.questions ?? const [];
     final i = _index;
@@ -115,6 +129,7 @@ class AppController extends ChangeNotifier {
       return failed ? AppStage.failed : AppStage.loading;
     }
     if (store.needsName) return AppStage.welcome;
+    if (_showingHistory) return AppStage.history;
     return currentQuestion == null ? AppStage.summary : AppStage.question;
   }
 
@@ -315,6 +330,8 @@ class AppController extends ChangeNotifier {
     _placedFor = null;
     _index = null;
     _seenSummary = false;
+    _showingHistory = false;
+    _historyDay = null;
   }
 
   /// Retry after a failed first load.
@@ -369,6 +386,7 @@ class AppController extends ChangeNotifier {
       _index = null;
       _placedFor = null;
       _seenSummary = false;
+      _showingHistory = false;
     }
     unawaited(store.flush());
   }
@@ -401,6 +419,7 @@ class AppController extends ChangeNotifier {
     unawaited(_store?.flush());
     _forward = _index == null || index >= _index!;
     _index = index;
+    _showingHistory = false;
     notifyListeners();
   }
 
@@ -413,6 +432,44 @@ class AppController extends ChangeNotifier {
     unawaited(_store?.flush());
     _index = null;
     _seenSummary = true;
+    _showingHistory = false;
+    notifyListeners();
+  }
+
+  /// Opens earlier days' answers on the most recent day. Until the sheet has
+  /// answered this session it is asked again, so the screen is not left
+  /// waiting on a failed refresh.
+  void showHistory() {
+    final store = _store;
+    if (store == null) return;
+    unawaited(store.flush());
+    if (!store.hasHistory) unawaited(store.refresh());
+    _showingHistory = true;
+    _historyDay = null;
+    notifyListeners();
+  }
+
+  /// One day further back, if anyone answered on an earlier one.
+  void earlierDay() => _stepHistory(1);
+
+  /// One day nearer today; from the most recent, back to today's summary.
+  void laterDay() {
+    final day = historyDay;
+    final days = _store?.history.days ?? const [];
+    if (day == null || days.indexOf(day) <= 0) {
+      showSummary();
+    } else {
+      _stepHistory(-1);
+    }
+  }
+
+  void _stepHistory(int by) {
+    final day = historyDay;
+    if (day == null) return;
+    final days = _store!.history.days;
+    final i = days.indexOf(day) + by;
+    if (i < 0 || i >= days.length) return;
+    _historyDay = days[i];
     notifyListeners();
   }
 
