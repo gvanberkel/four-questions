@@ -4,7 +4,12 @@ import 'package:four_questions/model/question.dart';
 
 /// [name]'s answer to [question] as an answer set shows it: Yes / No when the
 /// question asks for one, and the note.
-ActionAnswer answerView(Question question, String name, Answer? answer) =>
+ActionAnswer answerView(
+  Question question,
+  String name,
+  Answer? answer, {
+  String placeholder = 'Not answered yet',
+}) =>
     ActionAnswer(
       name: name,
       choice: !question.yesNo || answer?.yes == null
@@ -13,5 +18,5 @@ ActionAnswer answerView(Question question, String name, Answer? answer) =>
               ? 'Yes'
               : 'No',
       note: answer?.note ?? '',
-      placeholder: 'Not answered yet',
+      placeholder: placeholder,
     );

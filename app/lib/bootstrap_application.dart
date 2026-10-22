@@ -20,7 +20,10 @@ Future<void> bootstrapApplication({required ActionBrand brand}) async {
   final local = await LocalStore.open();
   final browser = Browser();
   final demo = AppConfig.demo
-      ? DemoSheetsGateway(prefs: await SharedPreferences.getInstance())
+      ? DemoSheetsGateway(
+          prefs: await SharedPreferences.getInstance(),
+          earlierDays: 6,
+        )
       : null;
 
   final controller = AppConfig.demo

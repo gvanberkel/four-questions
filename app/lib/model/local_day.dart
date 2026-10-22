@@ -37,6 +37,9 @@ class LocalDay implements Comparable<LocalDay> {
 
   DateTime get date => DateTime(year, month, day);
 
+  /// The day [days] after this one; negative for one before.
+  LocalDay addDays(int days) => LocalDay.of(DateTime(year, month, day + days));
+
   static const _weekdays = [
     'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', //
     'Sunday',

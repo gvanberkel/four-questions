@@ -33,6 +33,12 @@ class SummaryUi extends StatelessWidget {
             : '${store.day.spoken} · $answered of ${questions.length} answered',
         width: ActionPageWidth.reading,
         actions: [
+          ActionButton(
+            label: 'Earlier days',
+            icon: ActionIcons.history,
+            variant: ActionButtonVariant.text,
+            onPressed: controller.showHistory,
+          ),
           if (questions.isNotEmpty)
             ActionButton(
               label: 'Edit answers',

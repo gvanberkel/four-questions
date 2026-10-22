@@ -144,11 +144,12 @@ List<Question> parseQuestions(SheetTable table) {
   ];
 }
 
-/// The answers on [day] with the sheet row each came from. When a person
-/// answered a question twice that day, the later row wins.
+/// The answers on [day], or on every day when it is null, with the sheet row
+/// each came from. When a person answered a question twice that day, the
+/// later row wins.
 Map<String, ({int rowNumber, Answer answer})> parseAnswers(
   SheetTable table, {
-  required LocalDay day,
+  LocalDay? day,
 }) {
   final date = table.indexOf(AnswerColumns.date);
   final questionId = table.indexOf(AnswerColumns.questionId);
@@ -158,13 +159,14 @@ Map<String, ({int rowNumber, Answer answer})> parseAnswers(
 
   final answers = <String, ({int rowNumber, Answer answer})>{};
   for (final row in table.rows) {
-    if (Cells.day(Cells.at(row.cells, date)) != day) continue;
+    final rowDay = Cells.day(Cells.at(row.cells, date));
+    if (rowDay == null || (day != null && rowDay != day)) continue;
     final id = Cells.text(Cells.at(row.cells, questionId));
     final who = Cells.text(Cells.at(row.cells, email));
     if (id.isEmpty || who.isEmpty) continue;
 
     final answer = Answer(
-      day: day,
+      day: rowDay,
       questionId: id,
       email: who,
       yes: Cells.flag(Cells.at(row.cells, yesNo)),

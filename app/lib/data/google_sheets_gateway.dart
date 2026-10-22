@@ -36,11 +36,18 @@ class GoogleSheetsGateway implements SheetsGateway {
       _getOrNull('$_people!A:Z'),
     ).wait;
 
+    final answers = [
+      for (final entry in parseAnswers(tables[1]).values) entry.answer,
+    ];
     return SheetSnapshot(
       questions: parseQuestions(tables[0]),
       answers: [
-        for (final entry in parseAnswers(tables[1], day: day).values)
-          entry.answer,
+        for (final a in answers)
+          if (a.day == day) a,
+      ],
+      earlier: [
+        for (final a in answers)
+          if (a.day.compareTo(day) < 0) a,
       ],
       people: {
         for (final e in parsePeople(people ?? SheetTable(const [])).entries)
