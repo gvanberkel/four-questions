@@ -1,6 +1,7 @@
 import 'package:action_design_system/action_design_system.dart';
 import 'package:flutter/widgets.dart';
 import 'package:four_questions/app_controller.dart';
+import 'package:four_questions/screens/answer_view.dart';
 import 'package:four_questions/screens/shell/signed_in_shell.dart';
 import 'package:four_questions/screens/wording.dart';
 
@@ -25,6 +26,7 @@ class QuestionUi extends StatelessWidget {
     final answer = store.mine(question.id);
     final answered = store.isAnswered(question);
     final others = store.othersWhoAnswered(question);
+    final theirs = store.othersAnswers(question);
     final last = index == questions.length - 1;
 
     return SignedInShell(
@@ -109,6 +111,19 @@ class QuestionUi extends StatelessWidget {
                         hint: question.yesNo
                             ? 'Anything you would like to add'
                             : 'Write your answer',
+                      ),
+                    if (theirs.isNotEmpty)
+                      ActionStack(
+                        rhythm: ActionRhythm.tight,
+                        children: [
+                          const ActionSectionHeader(title: 'Answered today'),
+                          ActionAnswerSet(
+                            answers: [
+                              for (final other in theirs)
+                                answerView(question, other.name, other.answer),
+                            ],
+                          ),
+                        ],
                       ),
                   ],
                 ),

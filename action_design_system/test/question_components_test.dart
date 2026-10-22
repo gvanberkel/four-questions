@@ -142,4 +142,49 @@ void main() {
     expect(find.text('Have you had fun today?'), findsOneWidget);
     expect(find.text('Answered by Hovi today'), findsOneWidget);
   });
+
+  group('an answer set', () {
+    const pair = ActionAnswerSet(
+      title: 'Have you had fun today?',
+      layout: ActionAnswerLayout.sideBySide,
+      answers: [
+        ActionAnswer(name: 'Greg', choice: 'Yes', note: 'A kite at the beach'),
+        ActionAnswer(name: 'Hovi', placeholder: 'Not answered yet'),
+      ],
+    );
+
+    testWidgets('puts two side by side when there is room', (tester) async {
+      await tester.pumpWidget(_host(const SizedBox(width: 600, child: pair)));
+
+      final greg = tester.getTopLeft(find.text('Greg'));
+      final hovi = tester.getTopLeft(find.text('Hovi'));
+      expect(hovi.dy, greg.dy);
+      expect(hovi.dx, greaterThan(greg.dx));
+      expect(find.text('Yes'), findsOneWidget);
+      expect(find.text('A kite at the beach'), findsOneWidget);
+      expect(find.text('Not answered yet'), findsOneWidget);
+    });
+
+    testWidgets('stacks them when the columns would be too narrow',
+        (tester) async {
+      await tester.pumpWidget(_host(const SizedBox(width: 280, child: pair)));
+
+      final greg = tester.getTopLeft(find.text('Greg'));
+      final hovi = tester.getTopLeft(find.text('Hovi'));
+      expect(hovi.dy, greaterThan(greg.dy));
+      expect(hovi.dx, greg.dx);
+    });
+
+    testWidgets('reports a tap', (tester) async {
+      var taps = 0;
+      await tester.pumpWidget(_host(ActionAnswerSet(
+        title: 'Have you had fun today?',
+        onTap: () => taps++,
+        answers: const [ActionAnswer(name: 'Hovi', choice: 'No')],
+      )));
+
+      await tester.tap(find.text('Have you had fun today?'));
+      expect(taps, 1);
+    });
+  });
 }

@@ -96,8 +96,10 @@ class CheckInStore extends ChangeNotifier {
   List<Question> get questions =>
       [...?_questions?.where((q) => q.active)];
 
-  Answer? mine(String questionId) =>
-      _answers[Answer.keyOf(_day, questionId, me.email)];
+  Answer? mine(String questionId) => answerOf(questionId, me.email);
+
+  Answer? answerOf(String questionId, String email) =>
+      _answers[Answer.keyOf(_day, questionId, email)];
 
   bool isAnswered(Question question) =>
       mine(question.id)?.answers(question) ?? false;
@@ -131,8 +133,23 @@ class CheckInStore extends ChangeNotifier {
             nameOf(a.email),
       ];
 
+  /// What the other people who answered [question] today said, most recent
+  /// first, at most [limit] of them. The sheet keeps answers in the order
+  /// they were first given, and so does the store.
+  List<({String name, Answer answer})> othersAnswers(
+    Question question, {
+    int limit = 5,
+  }) =>
+      [
+        for (final a in _answers.values.toList().reversed)
+          if (a.questionId == question.id &&
+              !a.isBy(me.email) &&
+              a.answers(question))
+            (name: nameOf(a.email), answer: a),
+      ].take(limit).toList();
+
   /// Everyone else who answered today, with how many of today's questions.
-  List<({String name, int answered})> get othersToday {
+  List<({String email, String name, int answered})> get othersToday {
     final counts = <String, int>{};
     final active = {for (final q in questions) q.id: q};
     for (final a in _answers.values) {
@@ -143,7 +160,8 @@ class CheckInStore extends ChangeNotifier {
       counts.update(a.email.toLowerCase(), (n) => n + 1, ifAbsent: () => 1);
     }
     return [
-      for (final e in counts.entries) (name: nameOf(e.key), answered: e.value),
+      for (final e in counts.entries)
+        (email: e.key, name: nameOf(e.key), answered: e.value),
     ];
   }
 

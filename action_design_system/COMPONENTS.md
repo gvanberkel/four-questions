@@ -61,6 +61,7 @@ tables say, per component: what it **owns** (draws and decides), what it
 |---|---|---|---|
 | `ActionListRow` | A row: tinted icon disc, title, subtitle, trailing control. A tappable row shows a chevron unless given its own trailing. `emphasis` washes the row in a tone, for an entry that must stand out among its siblings. Title and subtitle end in an ellipsis unless `wrap`. | `title`, `subtitle`, `icon` + `iconTone`, `trailing`, `onTap`, `emphasis`, `wrap`. | Decide what its subtitle says. |
 | `ActionListCard` | A card whose content is a list of rows, hairlined between them — it owns the inset and the dividers so a screen writes neither. | `children`. | Care what the rows are. |
+| `ActionAnswerSet` | Several people's answers to one question: an optional question title (with a chevron when tappable), then each person — avatar, name, their choice as a pill, their note, or a muted placeholder. `stacked` puts one under another; `sideBySide` puts exactly two in equal columns, falling back to stacked when the columns would be too narrow to read. | `answers` (`ActionAnswer(name, choice, note, placeholder)`), `title`, `layout`, `onTap`. | Decide whose answers to show, in which order, or what counts as answered; colour an answer as good or bad. |
 | `ActionListDivider` | The inset hairline, for a card composing its own rows. | — | Appear at the ends of a list. |
 
 ## Fields

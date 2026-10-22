@@ -30,9 +30,13 @@ Sign-in needs a one-off Google Cloud setup and the OAuth client ID in
    choose) when the question is a yes/no one, a notes box when it allows
    notes. Back, Skip / Next, and the step track at the top go anywhere in
    the set. A question someone else has answered today carries an
-   "Answered by … today" tag.
+   "Answered by … today" tag, and their answers (the latest five, most
+   recent first) are shown beneath your own.
 4. **The summary**: each question and your answer, who else has answered
-   today, and a way back into any question to change it. Opening the app
+   today, and a way back into any question to change it. Once anyone else
+   has answered, each question shows their answers with yours: side by side
+   when there is one other person, one under another (yours first) when
+   there are more. Opening the app
    when everything is answered goes straight here; otherwise it opens on the
    first unanswered question.
 

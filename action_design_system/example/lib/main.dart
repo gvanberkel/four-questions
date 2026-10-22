@@ -646,6 +646,44 @@ class ListsPage extends StatelessWidget {
               ],
             ),
           ),
+          Example(
+            title: 'ActionAnswerSet',
+            boundary:
+                'Whose answers, in what order, is the screen\'s; the set only lays them out — two side by side, more one under another.',
+            child: ActionStack(
+              rhythm: ActionRhythm.group,
+              children: [
+                ActionAnswerSet(
+                  title: 'Have you had fun today?',
+                  layout: ActionAnswerLayout.sideBySide,
+                  onTap: () {},
+                  answers: const [
+                    ActionAnswer(
+                      name: 'Greg',
+                      choice: 'Yes',
+                      note:
+                          'Built a kite with the kids and flew it at the beach.',
+                    ),
+                    ActionAnswer(name: 'Hovi', placeholder: 'Not answered yet'),
+                  ],
+                ),
+                const ActionAnswerSet(
+                  answers: [
+                    ActionAnswer(name: 'Hovi', choice: 'Yes'),
+                    ActionAnswer(
+                      name: 'Sam',
+                      choice: 'No',
+                      note: 'Long day at work — tomorrow.',
+                    ),
+                    ActionAnswer(
+                      name: 'Lee',
+                      note: 'A question without Yes / No takes a note.',
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
           const Example(
             title: 'Fields',
             boundary:

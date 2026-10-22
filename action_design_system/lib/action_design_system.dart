@@ -29,6 +29,7 @@ export 'package:action_design_system/components/fields/action_switch_row.dart';
 export 'package:action_design_system/components/fields/action_text_field.dart';
 export 'package:action_design_system/components/fields/action_value_row.dart';
 
+export 'package:action_design_system/components/lists/action_answer_set.dart';
 export 'package:action_design_system/components/lists/action_list_row.dart';
 
 export 'package:action_design_system/components/cards/action_card.dart';
