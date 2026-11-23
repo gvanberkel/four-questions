@@ -13,16 +13,16 @@ void main() {
     Question(id: '3', text: 'Words', yesNo: false),
   ];
 
-  Answer a(LocalDay day, String id, String email, {bool? yes, String note = ''}) =>
-      Answer(day: day, questionId: id, email: email, yes: yes, note: note);
+  Answer a(LocalDay day, String id, String email, {String? choice, String note = ''}) =>
+      Answer(day: day, questionId: id, email: email, choice: choice, note: note);
 
   test('days with an answer, most recent first; blanks and unknowns left out',
       () {
     final history = AnswerHistory(questions: questions, answers: [
-      a(monday, '1', 'greg@example.com', yes: true),
+      a(monday, '1', 'greg@example.com', choice: 'Yes'),
       a(tuesday, '1', 'greg@example.com'), // a yes/no left blank
-      a(tuesday, '9', 'greg@example.com', yes: true), // not on the sheet
-      a(LocalDay(2026, 10, 7), '2', 'hovi@example.com', yes: false),
+      a(tuesday, '9', 'greg@example.com', choice: 'Yes'), // not on the sheet
+      a(LocalDay(2026, 10, 7), '2', 'hovi@example.com', choice: 'No'),
     ]);
 
     expect(history.days, [const LocalDay(2026, 10, 7), monday]);
@@ -32,7 +32,7 @@ void main() {
       () {
     final history = AnswerHistory(questions: questions, answers: [
       a(monday, '3', 'Hovi@example.com', note: 'A walk'),
-      a(monday, '2', 'greg@example.com', yes: true),
+      a(monday, '2', 'greg@example.com', choice: 'Yes'),
       a(monday, '3', 'greg@example.com', note: 'Reading'),
     ]);
 

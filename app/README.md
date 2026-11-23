@@ -54,8 +54,8 @@ found by their header, so they can be reordered (and a few renamed — see
 
 | Sheet | Columns | Notes |
 |---|---|---|
-| **Questions** | Question ID · Question · Active · Yes/No · Allow notes | Flags are `Yes` / `No` (or checkboxes). A question that is neither yes/no nor allows notes gets a notes box, so it can be answered. |
-| **Answers** | Date · Question ID · Answered By · Yes/No · Note | One row per person, question and day. Changing an answer rewrites that row; if there are two, the lower one wins. *Answered By* is the Google account email. |
+| **Questions** | Question ID · Question · Active · Yes/No · Allow notes · Options | Flags are `Yes` / `No` (or checkboxes). A question that is neither yes/no nor allows notes gets a notes box, so it can be answered. *Options* (optional) lists what a yes/no question offers, separated by commas, e.g. `Yes, Half-Half, No`; blank means Yes / No. |
+| **Answers** | Date · Question ID · Answered By · Yes/No · Note | *Yes/No* holds the option picked, as its word. | One row per person, question and day. Changing an answer rewrites that row; if there are two, the lower one wins. *Answered By* is the Google account email. |
 | **People** | Email · Name | Created by the app on the first sign-in if missing. Edit a name here and the app picks it up. |
 
 Notes starting with `=`, `+`, `-` or `@` are written with a leading `'` so

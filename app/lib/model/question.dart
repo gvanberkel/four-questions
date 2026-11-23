@@ -9,6 +9,7 @@ class Question {
     this.active = true,
     this.yesNo = true,
     this.allowNotes = false,
+    this.options = defaultOptions,
   });
 
   factory Question.fromJson(Map<String, Object?> json) => Question(
@@ -17,17 +18,37 @@ class Question {
         active: json['active']! as bool,
         yesNo: json['yesNo']! as bool,
         allowNotes: json['allowNotes']! as bool,
+        options: (json['options'] as List?)?.cast<String>() ?? defaultOptions,
       );
+
+  static const defaultOptions = ['Yes', 'No'];
 
   final String id;
   final String text;
   final bool active;
+
+  /// Answered by picking one of [options].
   final bool yesNo;
   final bool allowNotes;
+
+  /// What a [yesNo] question offers, in order: Yes / No unless the sheet
+  /// names others.
+  final List<String> options;
 
   /// A question that is neither yes/no nor open to notes would have no way to
   /// be answered, so it takes a note.
   bool get takesNote => allowNotes || !yesNo;
+
+  /// [choice] as this question spells it, so "yes" from the sheet still
+  /// selects "Yes"; a choice it no longer offers is kept as given.
+  String? optionFor(String? choice) {
+    if (choice == null) return null;
+    final wanted = choice.trim().toLowerCase();
+    for (final option in options) {
+      if (option.toLowerCase() == wanted) return option;
+    }
+    return choice;
+  }
 
   Map<String, Object?> toJson() => {
         'id': id,
@@ -35,6 +56,7 @@ class Question {
         'active': active,
         'yesNo': yesNo,
         'allowNotes': allowNotes,
+        'options': options,
       };
 
   @override
@@ -44,8 +66,10 @@ class Question {
       other.text == text &&
       other.active == active &&
       other.yesNo == yesNo &&
-      other.allowNotes == allowNotes;
+      other.allowNotes == allowNotes &&
+      listEquals(other.options, options);
 
   @override
-  int get hashCode => Object.hash(id, text, active, yesNo, allowNotes);
+  int get hashCode => Object.hash(
+      id, text, active, yesNo, allowNotes, Object.hashAll(options));
 }

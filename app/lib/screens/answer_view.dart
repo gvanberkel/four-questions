@@ -2,8 +2,8 @@ import 'package:action_design_system/action_design_system.dart';
 import 'package:four_questions/model/answer.dart';
 import 'package:four_questions/model/question.dart';
 
-/// [name]'s answer to [question] as an answer set shows it: Yes / No when the
-/// question asks for one, and the note.
+/// [name]'s answer to [question] as an answer set shows it: the option picked
+/// when the question offers them, and the note.
 ActionAnswer answerView(
   Question question,
   String name,
@@ -12,11 +12,7 @@ ActionAnswer answerView(
 }) =>
     ActionAnswer(
       name: name,
-      choice: !question.yesNo || answer?.yes == null
-          ? null
-          : answer!.yes!
-              ? 'Yes'
-              : 'No',
+      choice: question.yesNo ? question.optionFor(answer?.choice) : null,
       note: answer?.note ?? '',
       placeholder: placeholder,
     );

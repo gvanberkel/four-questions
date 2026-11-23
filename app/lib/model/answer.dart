@@ -9,7 +9,7 @@ class Answer {
     required this.day,
     required this.questionId,
     required this.email,
-    this.yes,
+    this.choice,
     this.note = '',
   });
 
@@ -17,7 +17,7 @@ class Answer {
         day: LocalDay.tryParse(json['day']! as String)!,
         questionId: json['questionId']! as String,
         email: json['email']! as String,
-        yes: json['yes'] as bool?,
+        choice: json['choice'] as String? ?? _legacyChoice(json['yes']),
         note: json['note'] as String? ?? '',
       );
 
@@ -25,8 +25,9 @@ class Answer {
   final String questionId;
   final String email;
 
-  /// Null until a yes/no question has been answered.
-  final bool? yes;
+  /// The option picked — "Yes", "No", "Half-Half" — null until a yes/no
+  /// question has been answered.
+  final String? choice;
   final String note;
 
   /// One answer per person, question and day; a later row replaces an
@@ -40,13 +41,13 @@ class Answer {
 
   /// A yes/no question is answered by its yes or no; any other by a note.
   bool answers(Question question) =>
-      question.yesNo ? yes != null : note.trim().isNotEmpty;
+      question.yesNo ? choice != null : note.trim().isNotEmpty;
 
-  Answer copyWith({bool? yes, String? note}) => Answer(
+  Answer copyWith({String? choice, String? note}) => Answer(
         day: day,
         questionId: questionId,
         email: email,
-        yes: yes ?? this.yes,
+        choice: choice ?? this.choice,
         note: note ?? this.note,
       );
 
@@ -54,7 +55,7 @@ class Answer {
         'day': day.iso,
         'questionId': questionId,
         'email': email,
-        'yes': yes,
+        'choice': choice,
         'note': note,
       };
 
@@ -64,12 +65,19 @@ class Answer {
       other.day == day &&
       other.questionId == questionId &&
       other.email == email &&
-      other.yes == yes &&
+      other.choice == choice &&
       other.note == note;
 
   @override
-  int get hashCode => Object.hash(day, questionId, email, yes, note);
+  int get hashCode => Object.hash(day, questionId, email, choice, note);
 
   @override
-  String toString() => 'Answer($key, yes: $yes, note: "$note")';
+  String toString() => 'Answer($key, choice: $choice, note: "$note")';
+
+  /// Answers kept on the device before choices were words.
+  static String? _legacyChoice(Object? yes) => switch (yes) {
+        true => 'Yes',
+        false => 'No',
+        _ => null,
+      };
 }

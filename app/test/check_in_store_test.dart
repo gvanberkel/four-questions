@@ -60,7 +60,7 @@ void main() {
     local
       ..questions = [const Question(id: '1', text: 'Cached question?')]
       ..putAnswers(today, [
-        const Answer(day: today, questionId: '1', email: 'greg@example.com', yes: true),
+        const Answer(day: today, questionId: '1', email: 'greg@example.com', choice: 'Yes'),
       ]);
     sheet.loadGate = Completer();
 
@@ -87,17 +87,17 @@ void main() {
     await s.start();
     sheet.saveGate = Completer();
 
-    s.setYes(q('2'), true);
+    s.setChoice(q('2'), 'Yes');
 
     expect(s.isAnswered(q('2')), isTrue);
     expect(s.sync, SyncStatus.saving);
-    expect(local.pending.single.yes, isTrue,
+    expect(local.pending.single.choice, 'Yes',
         reason: 'safe on the device before the sheet has it');
 
     sheet.saveGate!.complete();
     await s.flush();
 
-    expect(sheet.answers.where((a) => a.isBy(me.email)).single.yes, isTrue);
+    expect(sheet.answers.where((a) => a.isBy(me.email)).single.choice, 'Yes');
     expect(local.pending, isEmpty);
     expect(s.sync, SyncStatus.idle);
   });
@@ -108,12 +108,12 @@ void main() {
     await s.start();
     sheet.saveGate = Completer();
 
-    s.setYes(q('1'), true);
+    s.setChoice(q('1'), 'Yes');
     final first = s.flush();
     s
-      ..setYes(q('1'), false)
+      ..setChoice(q('1'), 'No')
       ..setNote(q('1'), 'went to the park')
-      ..setYes(q('2'), true);
+      ..setChoice(q('2'), 'Yes');
 
     sheet.saveGate!.complete();
     await first;
@@ -123,7 +123,7 @@ void main() {
     expect(sheet.saved.length, 2);
     expect(sheet.saved[1].length, 2, reason: 'one row per question');
     final mine = sheet.answers.where((a) => a.isBy(me.email)).toList();
-    expect(mine.firstWhere((a) => a.questionId == '1').yes, isFalse);
+    expect(mine.firstWhere((a) => a.questionId == '1').choice, 'No');
     expect(mine.firstWhere((a) => a.questionId == '1').note, 'went to the park');
     expect(local.pending, isEmpty);
   });
@@ -134,7 +134,7 @@ void main() {
     await s.start();
     sheet.reachable = false;
 
-    s.setYes(q('3'), true);
+    s.setChoice(q('3'), 'Yes');
     await s.flush();
 
     expect(s.sync, SyncStatus.offline);
@@ -151,7 +151,7 @@ void main() {
     final first = store();
     await first.start();
     sheet.reachable = false;
-    first.setYes(q('1'), false);
+    first.setChoice(q('1'), 'No');
     await first.flush();
     first.dispose();
 
@@ -159,14 +159,14 @@ void main() {
     sheet.loadGate = Completer();
     final second = store();
     final started = second.start();
-    expect(second.mine('1')!.yes, isFalse);
+    expect(second.mine('1')!.choice, 'No');
 
     sheet.loadGate!.complete();
     await started;
     await second.flush();
 
-    expect(second.mine('1')!.yes, isFalse);
-    expect(sheet.answers.where((a) => a.isBy(me.email)).single.yes, isFalse);
+    expect(second.mine('1')!.choice, 'No');
+    expect(sheet.answers.where((a) => a.isBy(me.email)).single.choice, 'No');
   });
 
   test('a refresh read before a save landed does not undo it', () async {
@@ -175,13 +175,13 @@ void main() {
 
     sheet.loadGate = Completer();
     final refresh = s.refresh();
-    s.setYes(q('4'), true);
+    s.setChoice(q('4'), 'Yes');
     await s.flush();
     sheet.answers.clear(); // the refresh "read" the sheet before the save
     sheet.loadGate!.complete();
     await refresh;
 
-    expect(s.mine('4')?.yes, isTrue);
+    expect(s.mine('4')?.choice, 'Yes');
   });
 
   test('who else answered, by the name on the People sheet', () async {
@@ -208,7 +208,7 @@ void main() {
         day: today,
         questionId: '1',
         email: '$name@example.com',
-        yes: false,
+        choice: 'No',
         note: 'from $name',
       ));
     }
@@ -218,7 +218,7 @@ void main() {
         day: today,
         questionId: '1',
         email: 'greg@example.com',
-        yes: true,
+        choice: 'Yes',
       ));
     final s = store();
     await s.start();
@@ -227,7 +227,7 @@ void main() {
     expect([for (final t in theirs) t.name], ['f', 'e', 'd', 'c', 'b']);
     expect(theirs.first.answer.note, 'from f');
     expect(s.othersAnswers(q('2')), isEmpty);
-    expect(s.answerOf('1', 'HOVI@example.com')?.yes, isTrue);
+    expect(s.answerOf('1', 'HOVI@example.com')?.choice, 'Yes');
   });
 
   test('a first sign-in needs a name; choosing one saves it', () async {
@@ -266,12 +266,12 @@ void main() {
       () async {
     const yesterday = LocalDay(2026, 10, 7);
     sheet.answers.addAll(const [
-      Answer(day: yesterday, questionId: '1', email: 'greg@example.com', yes: true),
-      Answer(day: yesterday, questionId: '2', email: 'hovi@example.com', yes: false),
-      Answer(day: LocalDay(2026, 10, 1), questionId: '3', email: 'hovi@example.com', yes: true),
+      Answer(day: yesterday, questionId: '1', email: 'greg@example.com', choice: 'Yes'),
+      Answer(day: yesterday, questionId: '2', email: 'hovi@example.com', choice: 'No'),
+      Answer(day: LocalDay(2026, 10, 1), questionId: '3', email: 'hovi@example.com', choice: 'Yes'),
     ]);
     local.pending = const [
-      Answer(day: yesterday, questionId: '1', email: 'greg@example.com', yes: false),
+      Answer(day: yesterday, questionId: '1', email: 'greg@example.com', choice: 'No'),
     ];
     sheet.reachable = false;
     final s = store();
@@ -284,7 +284,7 @@ void main() {
     expect(s.hasHistory, isTrue);
     expect(s.history.days, [yesterday, const LocalDay(2026, 10, 1)]);
     final mine = s.history.on(yesterday).first.answers.single;
-    expect(mine.yes, isFalse, reason: 'the unsent answer wins');
+    expect(mine.choice, 'No', reason: 'the unsent answer wins');
   });
 
   test('a new day starts empty', () async {
@@ -296,7 +296,7 @@ void main() {
       today: () => day,
     );
     await s.start();
-    s.setYes(q('1'), true);
+    s.setChoice(q('1'), 'Yes');
     await s.flush();
     expect(s.answeredCount, 1);
 

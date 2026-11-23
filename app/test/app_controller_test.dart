@@ -64,7 +64,7 @@ void main() {
 
   void answered(List<String> ids) => sheet.answers.addAll([
         for (final id in ids)
-          Answer(day: today, questionId: id, email: greg.email, yes: true),
+          Answer(day: today, questionId: id, email: greg.email, choice: 'Yes'),
       ]);
 
   test('no one signed in: the sign-in screen', () {
@@ -124,8 +124,8 @@ void main() {
     signedIn();
     answered(['1', '2', '3', '4']);
     sheet.answers.addAll(const [
-      Answer(day: LocalDay(2026, 10, 7), questionId: '1', email: 'hovi@example.com', yes: true),
-      Answer(day: LocalDay(2026, 10, 5), questionId: '2', email: 'greg@example.com', yes: false),
+      Answer(day: LocalDay(2026, 10, 7), questionId: '1', email: 'hovi@example.com', choice: 'Yes'),
+      Answer(day: LocalDay(2026, 10, 5), questionId: '2', email: 'greg@example.com', choice: 'No'),
     ]);
     final c = controller()..start();
     await pumpEventQueue();

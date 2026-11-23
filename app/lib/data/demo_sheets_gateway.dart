@@ -26,7 +26,7 @@ class DemoSheetsGateway implements SheetsGateway {
       day: _day,
       questionId: '1',
       email: 'hovi@example.com',
-      yes: true,
+      choice: 'Yes',
     ));
   }
 
@@ -49,6 +49,7 @@ class DemoSheetsGateway implements SheetsGateway {
       id: '4',
       text: 'Have you been gentle with your kids today?',
       allowNotes: true,
+      options: ['Yes', 'Half-Half', 'No'],
     ),
     const Question(
       id: '5',
@@ -81,7 +82,7 @@ class DemoSheetsGateway implements SheetsGateway {
         day: day,
         questionId: q.id,
         email: 'hovi@example.com',
-        yes: n % 4 != 0,
+        choice: q.options[n % 4 == 0 ? q.options.length - 1 : n % 5 == 0 ? 1 : 0],
         note: _hoviNotes[n % _hoviNotes.length],
       ));
     }
@@ -92,7 +93,7 @@ class DemoSheetsGateway implements SheetsGateway {
         day: day,
         questionId: q.id,
         email: 'demo@example.com',
-        yes: n % 3 != 0,
+        choice: n % 3 != 0 ? 'Yes' : 'No',
         note: n % 2 == 0 ? 'Some of it' : '',
       ));
     }

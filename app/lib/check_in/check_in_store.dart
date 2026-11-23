@@ -268,8 +268,8 @@ class CheckInStore extends ChangeNotifier {
     unawaited(refresh());
   }
 
-  void setYes(Question question, bool yes) {
-    _record(question, (a) => a.copyWith(yes: yes));
+  void setChoice(Question question, String choice) {
+    _record(question, (a) => a.copyWith(choice: choice));
     unawaited(flush());
   }
 
