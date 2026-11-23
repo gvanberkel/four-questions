@@ -5,17 +5,13 @@ import 'package:four_questions/screens/answer_view.dart';
 import 'package:four_questions/screens/shell/signed_in_shell.dart';
 import 'package:four_questions/screens/wording.dart';
 
-/// One of today's questions: Yes / No when it asks for one, notes when it
+/// One of today's questions: its options (Yes / No unless the sheet says
+/// otherwise) when it asks for one, notes when it
 /// allows them, and Back / Skip / Next beneath.
 class QuestionUi extends StatelessWidget {
   const QuestionUi({super.key, required this.controller});
 
   final AppController controller;
-
-  static const _yesNo = [
-    ActionChoice(value: true, label: 'Yes'),
-    ActionChoice(value: false, label: 'No'),
-  ];
 
   @override
   Widget build(BuildContext context) {
@@ -96,11 +92,15 @@ class QuestionUi extends StatelessWidget {
                   rhythm: ActionRhythm.section,
                   children: [
                     if (question.yesNo)
-                      ActionChoiceGroup<bool>(
+                      ActionChoiceGroup<String>(
                         semanticLabel: question.text,
-                        choices: _yesNo,
-                        value: answer?.yes,
-                        onChanged: (yes) => store.setYes(question, yes),
+                        choices: [
+                          for (final option in question.options)
+                            ActionChoice(value: option, label: option),
+                        ],
+                        value: question.optionFor(answer?.choice),
+                        onChanged: (choice) =>
+                            store.setChoice(question, choice),
                       ),
                     if (question.takesNote)
                       ActionNoteField(

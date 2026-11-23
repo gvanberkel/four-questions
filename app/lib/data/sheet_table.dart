@@ -18,6 +18,7 @@ abstract final class QuestionColumns {
   static const active = SheetColumn(['Active'], 2);
   static const yesNo = SheetColumn(['Yes/No', 'Yes No'], 3);
   static const allowNotes = SheetColumn(['Allow notes', 'Notes'], 4);
+  static const options = SheetColumn(['Options', 'Choices'], 5);
 }
 
 abstract final class AnswerColumns {
@@ -116,11 +117,26 @@ abstract final class Cells {
   static String literal(String text) =>
       RegExp(r'^[=+\-@]').hasMatch(text) ? "'$text" : text;
 
-  static String yesNo(bool? yes) => switch (yes) {
-        true => 'Yes',
-        false => 'No',
-        null => '',
-      };
+  /// An Answers cell as the option it names: a checkbox or `y` / `true`
+  /// reads as Yes or No, any other text as itself.
+  static String? choice(Object? cell) {
+    if (text(cell).isEmpty) return null;
+    return switch (flag(cell)) {
+      true => 'Yes',
+      false => 'No',
+      null => text(cell),
+    };
+  }
+
+  /// A Questions cell listing options, split on commas, `|` or new lines.
+  /// Fewer than two is no choice at all, so Yes / No stands.
+  static List<String> options(Object? cell) {
+    final options = <String>[
+      for (final o in text(cell).split(RegExp(r'[,|\n]')))
+        if (o.trim().isNotEmpty) o.trim(),
+    ];
+    return options.length < 2 ? Question.defaultOptions : options;
+  }
 }
 
 List<Question> parseQuestions(SheetTable table) {
@@ -129,6 +145,7 @@ List<Question> parseQuestions(SheetTable table) {
   final active = table.indexOf(QuestionColumns.active);
   final yesNo = table.indexOf(QuestionColumns.yesNo);
   final allowNotes = table.indexOf(QuestionColumns.allowNotes);
+  final options = table.indexOf(QuestionColumns.options);
 
   return [
     for (final row in table.rows)
@@ -140,6 +157,7 @@ List<Question> parseQuestions(SheetTable table) {
           active: Cells.flag(Cells.at(row.cells, active)) ?? false,
           yesNo: Cells.flag(Cells.at(row.cells, yesNo)) ?? false,
           allowNotes: Cells.flag(Cells.at(row.cells, allowNotes)) ?? false,
+          options: Cells.options(Cells.at(row.cells, options)),
         ),
   ];
 }
@@ -169,7 +187,7 @@ Map<String, ({int rowNumber, Answer answer})> parseAnswers(
       day: rowDay,
       questionId: id,
       email: who,
-      yes: Cells.flag(Cells.at(row.cells, yesNo)),
+      choice: Cells.choice(Cells.at(row.cells, yesNo)),
       note: Cells.text(Cells.at(row.cells, note)),
     );
     answers[answer.key] = (rowNumber: row.rowNumber, answer: answer);
@@ -197,7 +215,7 @@ List<Object?> answerRow(SheetTable table, Answer answer) => table.layOut({
       AnswerColumns.date: answer.day.iso,
       AnswerColumns.questionId: Cells.id(answer.questionId),
       AnswerColumns.email: answer.email,
-      AnswerColumns.yesNo: Cells.yesNo(answer.yes),
+      AnswerColumns.yesNo: Cells.literal(answer.choice ?? ''),
       AnswerColumns.note: Cells.literal(answer.note),
     });
 

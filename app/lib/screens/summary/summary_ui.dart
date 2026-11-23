@@ -169,7 +169,7 @@ class SummaryUi extends StatelessWidget {
     final answer = store.mine(question.id);
     final answered = store.isAnswered(question);
     final note = answer?.note.trim() ?? '';
-    final yes = question.yesNo ? answer?.yes : null;
+    final choice = question.yesNo ? question.optionFor(answer?.choice) : null;
 
     return ActionListRow(
       icon: answered ? ActionIcons.positive : ActionIcons.unanswered,
@@ -180,9 +180,9 @@ class SummaryUi extends StatelessWidget {
           : answered
               ? null
               : 'Not answered yet',
-      trailing: yes == null
+      trailing: choice == null
           ? null
-          : ActionPill(yes ? 'Yes' : 'No', tone: ActionTone.accent),
+          : ActionPill(choice, tone: ActionTone.accent),
       onTap: () => controller.edit(question),
       wrap: true,
     );

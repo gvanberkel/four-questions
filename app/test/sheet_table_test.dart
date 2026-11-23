@@ -38,6 +38,30 @@ void main() {
       expect(questions.single.text, 'Reordered?');
       expect(questions.single.allowNotes, isFalse);
     });
+
+    test('options come from the Options column, Yes / No when blank', () {
+      final questions = parseQuestions(SheetTable([
+        ['Question ID', 'Question', 'Active', 'Yes/No', 'Allow notes', 'Options'],
+        [4, 'Gentle with the kids?', 'Yes', 'Yes', 'Yes', 'Yes, Half-Half, No'],
+        [5, 'Fun?', 'Yes', 'Yes', 'Yes', ''],
+        [6, 'One option only?', 'Yes', 'Yes', 'No', 'Maybe'],
+        [7, 'Pipes?', 'Yes', 'Yes', 'No', 'Lots | Some |None'],
+      ]));
+
+      expect(questions[0].options, ['Yes', 'Half-Half', 'No']);
+      expect(questions[1].options, ['Yes', 'No']);
+      expect(questions[2].options, ['Yes', 'No']);
+      expect(questions[3].options, ['Lots', 'Some', 'None']);
+    });
+
+    test('a sheet without an Options column offers Yes / No', () {
+      final questions = parseQuestions(SheetTable([
+        ['Question ID', 'Question', 'Active', 'Yes/No', 'Allow notes'],
+        [1, 'Fun?', 'Yes', 'Yes', 'Yes', 'stray cell'],
+      ]));
+
+      expect(questions.single.options, ['Yes', 'No']);
+    });
   });
 
   group('answers', () {
@@ -57,11 +81,11 @@ void main() {
       expect(answers.length, 2);
       final greg = answers[Answer.keyOf(today, '1', 'greg@example.com')]!;
       expect(greg.rowNumber, 2);
-      expect(greg.answer.yes, isTrue);
+      expect(greg.answer.choice, 'Yes');
       expect(greg.answer.note, 'Park');
       final hovi = answers[Answer.keyOf(today, '2', 'hovi@example.com')]!;
       expect(hovi.rowNumber, 4);
-      expect(hovi.answer.yes, isFalse);
+      expect(hovi.answer.choice, 'No');
     });
 
     test('with no day asked for, every day', () {
@@ -92,7 +116,7 @@ void main() {
 
       expect(answers.length, 1);
       expect(answers.values.single.rowNumber, 3);
-      expect(answers.values.single.answer.yes, isFalse);
+      expect(answers.values.single.answer.choice, 'No');
     });
 
     test('the old "Person" header still finds the email column', () {
@@ -118,12 +142,31 @@ void main() {
           day: today,
           questionId: '4',
           email: 'greg@example.com',
-          yes: false,
+          choice: 'No',
           note: '=not a formula',
         ),
       );
 
       expect(row, ['greg@example.com', '2026-10-08', "'=not a formula", 4, 'No']);
+    });
+
+    test('any option is read and written as its word', () {
+      final answers = parseAnswers(
+        SheetTable([
+          header,
+          [serial, 4, 'greg@example.com', 'Half-Half', ''],
+          [serial, 1, 'hovi@example.com', true, ''],
+          [serial, 2, 'hovi@example.com', 'y', ''],
+        ]),
+        day: today,
+      );
+
+      expect([for (final a in answers.values) a.answer.choice],
+          ['Half-Half', 'Yes', 'Yes']);
+      expect(
+        answerRow(SheetTable([header]), answers.values.first.answer)[3],
+        'Half-Half',
+      );
     });
 
     test('an unanswered yes/no is written blank', () {
