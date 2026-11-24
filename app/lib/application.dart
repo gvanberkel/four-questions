@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:four_questions/app_controller.dart';
 import 'package:four_questions/config.dart';
 import 'package:four_questions/screens/access/no_access_ui.dart';
+import 'package:four_questions/screens/choose_day/choose_day_ui.dart';
 import 'package:four_questions/screens/history/history_ui.dart';
 import 'package:four_questions/screens/loading/loading_ui.dart';
 import 'package:four_questions/screens/question/question_ui.dart';
@@ -40,6 +41,7 @@ class Application extends StatelessWidget {
                 LoadingUi(controller: controller),
               AppStage.noAccess => NoAccessUi(controller: controller),
               AppStage.welcome => WelcomeUi(controller: controller),
+              AppStage.chooseDay => ChooseDayUi(controller: controller),
               AppStage.question => QuestionUi(controller: controller),
               AppStage.summary => SummaryUi(controller: controller),
               AppStage.history => HistoryUi(controller: controller),

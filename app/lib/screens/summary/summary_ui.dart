@@ -7,9 +7,10 @@ import 'package:four_questions/screens/answer_view.dart';
 import 'package:four_questions/screens/shell/signed_in_shell.dart';
 import 'package:four_questions/screens/wording.dart';
 
-/// Today at a glance: each question and how you answered it — beside
-/// everyone else's answers once anyone else has answered — and who else has
-/// answered today. Tapping a question goes back to it.
+/// The day at a glance — today, or yesterday while its questions are being
+/// answered: each question and how you answered it — beside everyone else's
+/// answers once anyone else has answered — and who else has answered that
+/// day. Tapping a question goes back to it.
 class SummaryUi extends StatelessWidget {
   const SummaryUi({super.key, required this.controller});
 
@@ -21,16 +22,19 @@ class SummaryUi extends StatelessWidget {
     final questions = store.questions;
     final answered = store.answeredCount;
     final remaining = questions.length - answered;
-    final others = store.othersToday;
+    final others = store.othersOnDay;
     final firstOpen = questions.indexWhere((q) => !store.isAnswered(q));
+    final yesterday = store.answeringYesterday;
+    final when = answeringWord(yesterday: yesterday);
+    final day = store.answering;
 
     return SignedInShell(
       controller: controller,
       child: ActionPage(
-        title: 'Today',
+        title: yesterday ? 'Yesterday' : 'Today',
         subtitle: questions.isEmpty
-            ? store.day.spoken
-            : '${store.day.spoken} · $answered of ${questions.length} answered',
+            ? day.spoken
+            : '${day.spoken} · $answered of ${questions.length} answered',
         width: ActionPageWidth.reading,
         actions: [
           ActionButton(
@@ -46,6 +50,12 @@ class SummaryUi extends StatelessWidget {
               variant: ActionButtonVariant.outlined,
               onPressed: () => controller.goToQuestion(0),
             ),
+          if (yesterday)
+            ActionButton(
+              label: 'On to today',
+              icon: ActionIcons.today,
+              onPressed: controller.answerToday,
+            ),
         ],
         child: questions.isEmpty
             ? const ActionEmptyState(
@@ -60,7 +70,7 @@ class SummaryUi extends StatelessWidget {
                     ActionBanner(
                       icon: ActionIcons.positive,
                       tone: ActionTone.positive,
-                      title: 'All done for today',
+                      title: 'All done for $when',
                       message: store.sync == SyncStatus.idle
                           ? 'Your answers are saved to the sheet.'
                           : 'Your answers are kept on this device and will '
@@ -109,10 +119,12 @@ class SummaryUi extends StatelessWidget {
                   ActionStack(
                     rhythm: ActionRhythm.tight,
                     children: [
-                      const ActionSectionHeader(title: 'Also answered today'),
+                      ActionSectionHeader(title: 'Also answered $when'),
                       if (others.isEmpty)
-                        const ActionBodyText(
-                          'No one else has answered yet today.',
+                        ActionBodyText(
+                          yesterday
+                              ? 'No one else answered yesterday.'
+                              : 'No one else has answered yet today.',
                           muted: true,
                         )
                       else

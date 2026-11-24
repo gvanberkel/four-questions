@@ -31,6 +31,10 @@ enum AppStage {
   /// A first sign-in: asking the name the person goes by.
   welcome,
 
+  /// Yesterday's questions are not all answered and nothing is yet today:
+  /// which day to answer for.
+  chooseDay,
+
   question,
   summary,
 
@@ -79,6 +83,10 @@ class AppController extends ChangeNotifier {
   int? _index;
   bool _forward = true;
   bool _seenSummary = false;
+
+  /// Whether the day to answer for is settled for today: chosen, or passed
+  /// over by moving on.
+  bool _dayChosen = false;
   LocalDay? _placedFor;
   bool _showingHistory = false;
   LocalDay? _historyDay;
@@ -130,6 +138,11 @@ class AppController extends ChangeNotifier {
     }
     if (store.needsName) return AppStage.welcome;
     if (_showingHistory) return AppStage.history;
+    if (!_dayChosen &&
+        store.yesterdayOpen &&
+        store.answeredOn(store.day) == 0) {
+      return AppStage.chooseDay;
+    }
     return currentQuestion == null ? AppStage.summary : AppStage.question;
   }
 
@@ -330,6 +343,7 @@ class AppController extends ChangeNotifier {
     _placedFor = null;
     _index = null;
     _seenSummary = false;
+    _dayChosen = false;
     _showingHistory = false;
     _historyDay = null;
   }
@@ -362,8 +376,8 @@ class AppController extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// Opens on the first question not yet answered today, or on the summary
-  /// when there is none.
+  /// Opens on the first question not yet answered for the day being
+  /// answered, or on the summary when there is none.
   void _place(CheckInStore store) {
     if (_index != null) return;
     final questions = store.questions;
@@ -386,14 +400,39 @@ class AppController extends ChangeNotifier {
       _index = null;
       _placedFor = null;
       _seenSummary = false;
+      _dayChosen = false;
       _showingHistory = false;
     }
     unawaited(store.flush());
   }
 
+  /// Answers yesterday's questions, from the first not yet answered.
+  void answerYesterday() {
+    final store = _store;
+    if (store != null) _answerFor(store, store.yesterday);
+  }
+
+  /// Answers today's questions, from the first not yet answered.
+  void answerToday() {
+    final store = _store;
+    if (store != null) _answerFor(store, store.day);
+  }
+
+  void _answerFor(CheckInStore store, LocalDay day) {
+    unawaited(store.flush());
+    store.answerFor(day);
+    _dayChosen = true;
+    _showingHistory = false;
+    _seenSummary = false;
+    _index = null;
+    _place(store);
+    notifyListeners();
+  }
+
   void next() {
     final i = _index;
     if (i == null) return;
+    _dayChosen = true;
     unawaited(_store?.flush());
     _forward = true;
     if (i + 1 >= (_store?.questions.length ?? 0)) {
@@ -407,6 +446,7 @@ class AppController extends ChangeNotifier {
   void back() {
     final i = _index;
     if (i == null || i == 0) return;
+    _dayChosen = true;
     unawaited(_store?.flush());
     _forward = false;
     _index = i - 1;
@@ -419,6 +459,7 @@ class AppController extends ChangeNotifier {
     unawaited(_store?.flush());
     _forward = _index == null || index >= _index!;
     _index = index;
+    _dayChosen = true;
     _showingHistory = false;
     notifyListeners();
   }
@@ -432,6 +473,7 @@ class AppController extends ChangeNotifier {
     unawaited(_store?.flush());
     _index = null;
     _seenSummary = true;
+    _dayChosen = true;
     _showingHistory = false;
     notifyListeners();
   }
@@ -445,6 +487,7 @@ class AppController extends ChangeNotifier {
     unawaited(store.flush());
     if (!store.hasHistory) unawaited(store.refresh());
     _showingHistory = true;
+    _dayChosen = true;
     _historyDay = null;
     notifyListeners();
   }
@@ -506,19 +549,25 @@ class AppController extends ChangeNotifier {
   void _rememberView() {
     final store = _store;
     if (store == null || !store.hasData) return;
-    browser.setSessionValue(_viewKey, '${store.day.iso}|${_index ?? 'summary'}');
+    browser.setSessionValue(
+      _viewKey,
+      '${store.day.iso}|${store.answering.iso}|${_index ?? 'summary'}',
+    );
   }
 
   void _restoreView() {
     final saved = browser.sessionValue(_viewKey);
     browser.setSessionValue(_viewKey, null);
     final parts = saved?.split('|');
-    if (parts == null || parts.length != 2) return;
+    if (parts == null || parts.length != 3) return;
     final day = LocalDay.tryParse(parts[0]);
+    final answering = LocalDay.tryParse(parts[1]);
     if (day == null || day != (_today ?? () => LocalDay.of(_now()))()) return;
+    if (answering != null) _store?.answerFor(answering);
     _placedFor = day;
-    _index = int.tryParse(parts[1]);
+    _index = int.tryParse(parts[2]);
     _seenSummary = _index == null;
+    _dayChosen = true;
   }
 
   @override

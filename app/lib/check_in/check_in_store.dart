@@ -30,6 +30,9 @@ enum SyncStatus {
 /// kept on the device the moment they are given and sent to the sheet in the
 /// background. Earlier days' answers come with each refresh and are kept for
 /// the session only.
+///
+/// The questions are answered for [answering]: today, unless yesterday's
+/// were chosen instead with [answerFor].
 class CheckInStore extends ChangeNotifier {
   CheckInStore({
     required this.local,
@@ -54,6 +57,9 @@ class CheckInStore extends ChangeNotifier {
   final ValueChanged<String>? onAccessDenied;
 
   LocalDay _day;
+
+  /// Yesterday, while its questions are being answered; otherwise null.
+  LocalDay? _answering;
   List<Question>? _questions;
   Map<String, Answer> _answers = {};
   Map<String, Answer> _earlier = {};
@@ -82,7 +88,24 @@ class CheckInStore extends ChangeNotifier {
   static const _lastRetry = Duration(minutes: 1);
   bool _disposed = false;
 
+  /// Today.
   LocalDay get day => _day;
+
+  LocalDay get yesterday => _day.addDays(-1);
+
+  /// The day the questions are being answered for: today, or yesterday.
+  LocalDay get answering => _answering ?? _day;
+
+  /// Whether yesterday's questions are being answered rather than today's.
+  bool get answeringYesterday => _answering != null;
+
+  /// Answers the questions for [day] from now on: today or yesterday.
+  void answerFor(LocalDay day) {
+    final next = day == yesterday ? day : null;
+    if (next == _answering) return;
+    _answering = next;
+    _notify();
+  }
 
   /// Whether there is anything to draw — from the device or the sheet.
   bool get hasData => _questions != null;
@@ -110,10 +133,23 @@ class CheckInStore extends ChangeNotifier {
   List<Question> get questions =>
       [...?_questions?.where((q) => q.active)];
 
+  /// Everyone's answers on [day], wherever they are kept.
+  Map<String, Answer> _keptFor(LocalDay day) =>
+      day == _day ? _answers : _earlier;
+
+  Iterable<Answer> get _answeringAnswers {
+    final day = answering;
+    return _keptFor(day).values.where((a) => a.day == day);
+  }
+
+  Answer? _onDay(LocalDay day, String questionId, String email) =>
+      _keptFor(day)[Answer.keyOf(day, questionId, email)];
+
+  /// My answer for the day being answered.
   Answer? mine(String questionId) => answerOf(questionId, me.email);
 
   Answer? answerOf(String questionId, String email) =>
-      _answers[Answer.keyOf(_day, questionId, email)];
+      _onDay(answering, questionId, email);
 
   bool isAnswered(Question question) =>
       mine(question.id)?.answers(question) ?? false;
@@ -121,6 +157,20 @@ class CheckInStore extends ChangeNotifier {
   int get answeredCount => questions.where(isAnswered).length;
 
   bool get allAnswered => hasData && questions.every(isAnswered);
+
+  /// How many of the questions I answered on [day].
+  int answeredOn(LocalDay day) => questions
+      .where((q) => _onDay(day, q.id, me.email)?.answers(q) ?? false)
+      .length;
+
+  /// Whether yesterday's questions are worth offering: I have answered on
+  /// an earlier day, so I keep up with them, but not all of yesterday's.
+  bool get yesterdayOpen =>
+      hasData &&
+      questions.isNotEmpty &&
+      answeredOn(yesterday) < questions.length &&
+      _earlier.values.any((a) =>
+          a.isBy(me.email) && a.day.compareTo(yesterday) <= 0);
 
   String nameOf(String email) =>
       _people[email.toLowerCase()] ?? email.split('@').first;
@@ -138,35 +188,50 @@ class CheckInStore extends ChangeNotifier {
       _pendingName == null &&
       !_people.containsKey(me.email.toLowerCase());
 
-  /// The names of the other people who answered [question] today.
+  /// The names of the other people who answered [question] on the day
+  /// being answered.
   List<String> othersWhoAnswered(Question question) => [
-        for (final a in _answers.values)
+        for (final a in _answeringAnswers)
           if (a.questionId == question.id &&
               !a.isBy(me.email) &&
               a.answers(question))
             nameOf(a.email),
       ];
 
-  /// What the other people who answered [question] today said, most recent
-  /// first, at most [limit] of them. The sheet keeps answers in the order
+  /// What the other people who answered [question] on the day being
+  /// answered said, most recent first, at most [limit] of them. The sheet keeps answers in the order
   /// they were first given, and so does the store.
   List<({String name, Answer answer})> othersAnswers(
     Question question, {
     int limit = 5,
   }) =>
       [
-        for (final a in _answers.values.toList().reversed)
+        for (final a in _answeringAnswers.toList().reversed)
           if (a.questionId == question.id &&
               !a.isBy(me.email) &&
               a.answers(question))
             (name: nameOf(a.email), answer: a),
       ].take(limit).toList();
 
-  /// Everyone else who answered today, with how many of today's questions.
-  List<({String email, String name, int answered})> get othersToday {
+  /// The names of everyone else who answered anything on [day], in the
+  /// order they first answered.
+  List<String> othersOn(LocalDay day) {
+    final active = {for (final q in questions) q.id: q};
+    final emails = <String>{};
+    for (final a in _keptFor(day).values) {
+      final question = active[a.questionId];
+      if (a.day != day || a.isBy(me.email) || question == null) continue;
+      if (a.answers(question)) emails.add(a.email.toLowerCase());
+    }
+    return [for (final e in emails) nameOf(e)];
+  }
+
+  /// Everyone else who answered on the day being answered, with how many of
+  /// the questions.
+  List<({String email, String name, int answered})> get othersOnDay {
     final counts = <String, int>{};
     final active = {for (final q in questions) q.id: q};
-    for (final a in _answers.values) {
+    for (final a in _answeringAnswers) {
       final question = active[a.questionId];
       if (a.isBy(me.email) || question == null || !a.answers(question)) {
         continue;
@@ -194,7 +259,15 @@ class CheckInStore extends ChangeNotifier {
     _pending
       ..clear()
       ..addEntries(local.pending.map((a) => MapEntry(a.key, a)));
-    _answers = {for (final a in local.answersFor(_day)) a.key: a};
+    // The device keeps one day's answers: today's, or an earlier day's when
+    // the sheet has not been read since, which says whether I answered then.
+    final kept = local.keptAnswers;
+    _answers = {for (final a in kept) if (a.day == _day) a.key: a};
+    _earlier = {
+      for (final a in kept)
+        if (a.day.compareTo(_day) < 0) a.key: a,
+    };
+    _history = null;
     _overlay(_pending.values);
   }
 
@@ -260,6 +333,7 @@ class CheckInStore extends ChangeNotifier {
     if (today == _day) return;
     if (_day.compareTo(today) < 0) _earlier.addAll(_answers);
     _day = today;
+    _answering = null;
     _history = null;
     _recentlySaved.clear();
     _answers = {for (final a in local.answersFor(_day)) a.key: a};
@@ -280,16 +354,17 @@ class CheckInStore extends ChangeNotifier {
   }
 
   void _record(Question question, Answer Function(Answer) change) {
+    final day = answering;
     final current = mine(question.id) ??
-        Answer(day: _day, questionId: question.id, email: me.email);
+        Answer(day: day, questionId: question.id, email: me.email);
     final next = change(current);
     if (next == current) return;
 
-    _answers[next.key] = next;
+    _keptFor(day)[next.key] = next;
+    if (day != _day) _history = null;
     _pending[next.key] = next;
-    local
-      ..pending = _pending.values.toList()
-      ..putAnswers(_day, _answers.values.toList());
+    local.pending = _pending.values.toList();
+    if (day == _day) local.putAnswers(_day, _answers.values.toList());
     if (_sync == SyncStatus.idle) _sync = SyncStatus.saving;
     _notify();
   }

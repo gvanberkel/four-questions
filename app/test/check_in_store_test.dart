@@ -197,7 +197,7 @@ void main() {
     expect(s.othersWhoAnswered(q('1')), ['Hovi']);
     expect(s.othersWhoAnswered(q('2')), isEmpty);
     expect(
-      s.othersToday.single,
+      s.othersOnDay.single,
       (email: 'hovi@example.com', name: 'Hovi', answered: 1),
     );
   });
@@ -285,6 +285,51 @@ void main() {
     expect(s.history.days, [yesterday, const LocalDay(2026, 10, 1)]);
     final mine = s.history.on(yesterday).first.answers.single;
     expect(mine.choice, 'No', reason: 'the unsent answer wins');
+  });
+
+  test("answering yesterday's questions keeps them with yesterday", () async {
+    const yesterday = LocalDay(2026, 10, 7);
+    sheet.answers.add(const Answer(
+        day: yesterday, questionId: '1', email: 'hovi@example.com', choice: 'No'));
+    final s = store();
+    await s.start();
+
+    s.answerFor(yesterday);
+    expect(s.answering, yesterday);
+    expect(s.othersWhoAnswered(q('1')), ['Hovi']);
+    expect(s.othersOn(yesterday), ['Hovi']);
+
+    s.setChoice(q('1'), 'Yes');
+    expect(s.isAnswered(q('1')), isTrue);
+    expect(s.answeredOn(yesterday), 1);
+    expect(s.answeredOn(today), 0);
+    expect(s.history.on(yesterday).first.answers, hasLength(2));
+    await s.flush();
+    expect(sheet.saved.single.single.day, yesterday);
+
+    await s.refresh();
+    expect(s.mine('1')?.choice, 'Yes', reason: 'still there after a refresh');
+
+    s.answerFor(today);
+    expect(s.isAnswered(q('1')), isFalse);
+  });
+
+  test("yesterday's answers kept on the device count before the sheet answers",
+      () async {
+    const yesterday = LocalDay(2026, 10, 7);
+    local
+      ..questions = sheet.questions
+      ..putAnswers(yesterday, const [
+        Answer(day: yesterday, questionId: '1', email: 'greg@example.com', choice: 'Yes'),
+      ]);
+    sheet.loadGate = Completer();
+    final s = store();
+    unawaited(s.start());
+
+    expect(s.answeredOn(yesterday), 1);
+    expect(s.yesterdayOpen, isTrue);
+    expect(s.answeredCount, 0, reason: 'none of it is today');
+    sheet.loadGate!.complete();
   });
 
   test('a new day starts empty', () async {

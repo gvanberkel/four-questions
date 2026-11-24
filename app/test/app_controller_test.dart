@@ -150,6 +150,129 @@ void main() {
     expect(c.stage, AppStage.question);
   });
 
+  group('yesterday not finished', () {
+    const yesterday = LocalDay(2026, 10, 7);
+
+    // Greg keeps up (he answered two days ago) but answered only the first
+    // of yesterday's questions; Hovi answered the second.
+    setUp(() => sheet.answers.addAll(const [
+          Answer(day: LocalDay(2026, 10, 6), questionId: '1', email: 'greg@example.com', choice: 'Yes'),
+          Answer(day: yesterday, questionId: '1', email: 'greg@example.com', choice: 'Yes'),
+          Answer(day: yesterday, questionId: '2', email: 'hovi@example.com', choice: 'No', note: 'Busy day'),
+        ]));
+
+    test('asks which day before starting; yesterday shows what Hovi said',
+        () async {
+      signedIn();
+      final c = controller()..start();
+      await pumpEventQueue();
+      expect(c.stage, AppStage.chooseDay);
+
+      c.answerYesterday();
+      final store = c.store!;
+      expect(c.stage, AppStage.question);
+      expect(store.answering, yesterday);
+      expect(c.currentQuestion!.id, '2', reason: "yesterday's first open one");
+      expect(store.othersAnswers(c.currentQuestion!).single.answer.note,
+          'Busy day');
+
+      store.setChoice(c.currentQuestion!, 'Yes');
+      await pumpEventQueue();
+      expect(
+        sheet.answers.where((a) => a.day == yesterday && a.isBy(greg.email)),
+        hasLength(2),
+        reason: "saved against yesterday",
+      );
+      expect(store.answeredOn(today), 0, reason: 'today untouched');
+
+      c
+        ..next()
+        ..next()
+        ..next();
+      expect(c.stage, AppStage.summary);
+      expect(store.answeringYesterday, isTrue);
+
+      c.answerToday();
+      expect(store.answering, today);
+      expect(c.stage, AppStage.question);
+      expect(c.currentQuestion!.id, '1');
+    });
+
+    test('answering for today passes yesterday over', () async {
+      signedIn();
+      final c = controller()..start();
+      await pumpEventQueue();
+
+      c.answerToday();
+      expect(c.stage, AppStage.question);
+      expect(c.store!.answering, today);
+      expect(c.currentQuestion!.id, '1');
+    });
+
+    test('not asked once today is started or yesterday is done', () async {
+      signedIn();
+      answered(['1']);
+      final c = controller()..start();
+      await pumpEventQueue();
+      expect(c.stage, AppStage.question, reason: 'today already started');
+      c.dispose();
+
+      sheet.answers
+        ..removeWhere((a) => a.day == today && a.isBy(greg.email))
+        ..addAll([
+          for (final id in ['2', '3', '4'])
+            Answer(day: yesterday, questionId: id, email: greg.email, choice: 'No'),
+        ]);
+      final done = controller()..start();
+      await pumpEventQueue();
+      expect(done.stage, AppStage.question, reason: 'yesterday is done');
+    });
+
+    test('not asked of someone who has never answered', () async {
+      sheet.answers.removeWhere((a) => a.isBy(greg.email));
+      signedIn();
+      final c = controller()..start();
+      await pumpEventQueue();
+      expect(c.stage, AppStage.question);
+    });
+
+    test('answering yesterday survives the renewal round trip', () async {
+      var clock = now;
+      AppController page() => AppController(
+            local: local,
+            signIn: signIn,
+            browser: browser,
+            openGateway: (_) => sheet,
+            now: () => clock,
+            today: () => today,
+          )..start();
+
+      signedIn();
+      final c = page();
+      await pumpEventQueue();
+      c
+        ..answerYesterday()
+        ..next();
+      expect(c.questionIndex, 2);
+
+      clock = now.add(const Duration(minutes: 47));
+      browser.visible.add(null);
+      await pumpEventQueue();
+      c.dispose();
+
+      signIn.next = SignedIn(
+        greg,
+        AccessToken(value: 'new', expiresAt: clock.add(const Duration(hours: 1))),
+      );
+      final back = page();
+      await pumpEventQueue();
+
+      expect(back.stage, AppStage.question);
+      expect(back.store!.answering, yesterday);
+      expect(back.questionIndex, 2);
+    });
+  });
+
   test('a first sign-in asks for a name, prefilled from Google', () async {
     sheet.people.remove('greg@example.com');
     signedIn();

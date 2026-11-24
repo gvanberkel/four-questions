@@ -10,7 +10,9 @@ String listOfNames(List<String> names) => switch (names.length) {
 
 String answeredBy(List<String> names) => 'Answered by ${listOfNames(names)}';
 
-String answeredByToday(List<String> names) => '${answeredBy(names)} today';
+/// "today", or "yesterday" while yesterday's questions are being answered.
+String answeringWord({required bool yesterday}) =>
+    yesterday ? 'yesterday' : 'today';
 
 /// "Yesterday", "Monday 19 October", or "Friday 12 December 2025" in
 /// another year than [today]'s.
