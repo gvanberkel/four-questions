@@ -85,6 +85,9 @@ class LocalStore {
     return _answerList(_answers);
   }
 
+  /// Everyone's answers for whichever day the store holds.
+  List<Answer> get keptAnswers => _answerList(_answers);
+
   void putAnswers(LocalDay day, List<Answer> answers) {
     _prefs.setString(_answersDay, day.iso);
     _put(_answers, answers.map((a) => a.toJson()).toList());

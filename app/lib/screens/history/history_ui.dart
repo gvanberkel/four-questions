@@ -39,7 +39,9 @@ class HistoryUi extends StatelessWidget {
                 answeredBy([for (final p in people) _name(store, p)]),
               ].join(' · '),
         width: ActionPageWidth.reading,
-        backLabel: "Today's answers",
+        backLabel: store.answeringYesterday
+            ? "Yesterday's answers"
+            : "Today's answers",
         onBack: controller.showSummary,
         footer: day == null
             ? null
@@ -55,7 +57,11 @@ class HistoryUi extends StatelessWidget {
                         : null,
                   ),
                   ActionButton(
-                    label: index > 0 ? 'Later' : 'Today',
+                    label: index > 0
+                        ? 'Later'
+                        : store.answeringYesterday
+                            ? 'Yesterday'
+                            : 'Today',
                     icon: index > 0 ? ActionIcons.forward : ActionIcons.today,
                     variant: ActionButtonVariant.outlined,
                     onPressed: controller.laterDay,

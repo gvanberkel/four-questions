@@ -5,7 +5,8 @@ import 'package:four_questions/screens/answer_view.dart';
 import 'package:four_questions/screens/shell/signed_in_shell.dart';
 import 'package:four_questions/screens/wording.dart';
 
-/// One of today's questions: its options (Yes / No unless the sheet says
+/// One of the day's questions — today's, or yesterday's when those are
+/// being answered: its options (Yes / No unless the sheet says
 /// otherwise) when it asks for one, notes when it
 /// allows them, and Back / Skip / Next beneath.
 class QuestionUi extends StatelessWidget {
@@ -24,12 +25,18 @@ class QuestionUi extends StatelessWidget {
     final others = store.othersWhoAnswered(question);
     final theirs = store.othersAnswers(question);
     final last = index == questions.length - 1;
+    final yesterday = store.answeringYesterday;
+    final when = answeringWord(yesterday: yesterday);
 
     return SignedInShell(
       controller: controller,
       child: ActionPage(
         width: ActionPageWidth.focus,
-        backLabel: controller.canShowSummary ? "Today's answers" : null,
+        backLabel: controller.canShowSummary
+            ? yesterday
+                ? "Yesterday's answers"
+                : "Today's answers"
+            : null,
         onBack: controller.showSummary,
         footer: ActionInline(
           justify: ActionInlineJustify.spaceBetween,
@@ -77,13 +84,16 @@ class QuestionUi extends StatelessWidget {
             ActionStepSwitcher(
               forward: controller.forward,
               child: ActionPrompt(
-                key: ValueKey('${store.day.iso}/${question.id}'),
-                eyebrow: 'Question ${index + 1} of ${questions.length}',
+                key: ValueKey('${store.answering.iso}/${question.id}'),
+                eyebrow: [
+                  if (yesterday) 'Yesterday, ${store.answering.spoken}',
+                  'Question ${index + 1} of ${questions.length}',
+                ].join(' · '),
                 prompt: question.text,
                 pills: [
                   if (others.isNotEmpty)
                     ActionPill(
-                      answeredByToday(others),
+                      '${answeredBy(others)} $when',
                       icon: ActionIcons.people,
                       tone: ActionTone.positive,
                     ),
@@ -116,7 +126,7 @@ class QuestionUi extends StatelessWidget {
                       ActionStack(
                         rhythm: ActionRhythm.tight,
                         children: [
-                          const ActionSectionHeader(title: 'Answered today'),
+                          ActionSectionHeader(title: 'Answered $when'),
                           ActionAnswerSet(
                             answers: [
                               for (final other in theirs)
